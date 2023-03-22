@@ -6,6 +6,8 @@
 
 /* TODO : add your implementation for doubly-linked list */
 typedef struct {
+	void *data;
+	void *next;
 } list_t;
 
 typedef struct {

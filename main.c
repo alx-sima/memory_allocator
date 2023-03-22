@@ -31,7 +31,7 @@ int main(void)
 		} else if (strcmp(command, "WRITE") == 0) {
 			// TODO
 		} else if (strcmp(command, "PMAP") == 0) {
-			// TODO
+			pmap(arena);
 		} else {
 			print_err(INVALID_COMMAND);
 		}

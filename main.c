@@ -1,3 +1,5 @@
+#include <stdarg.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -40,16 +42,59 @@ char *read_line()
 	return NULL;
 }
 
+int read_numbers(char *s, int nr, ...)
+{
+	if (!s)
+		return 0;
+
+	va_list args;
+	va_start(args, nr);
+
+	char *endptr = s;
+	for (int i = 0; i < nr; ++i) {
+		uint64_t *adr = va_arg(args, uint64_t *);
+
+		*adr = strtoll(s, &endptr, 10);
+		if (endptr == s) {
+			va_end(args);
+			return 0;
+		}
+		s = endptr;
+	}
+
+	va_end(args);
+	// Nu mai exista caractere de citit.
+	return *endptr == '\0';
+}
+
+enum err_codes { INVALID_COMMAND };
+
+void print_err(enum err_codes err)
+{
+	switch (err) {
+
+	case INVALID_COMMAND:
+		puts("Invalid command. Please try again.");
+		break;
+	}
+}
+
 int main(void)
 {
+	arena_t *arena = NULL;
 	char *line;
 	while ((line = read_line())) {
-		char *command, *args;
-		command = strtok_r(line, " ", &args);
+		char *command = strtok(line, " ");
+		char *args = strtok(NULL, "");
+
 		if (strcmp(command, "ALLOC_ARENA") == 0) {
-			// TODO
+			uint64_t size;
+			if (read_numbers(args, 1, &size))
+				arena = alloc_arena(size);
+			else
+				print_err(INVALID_COMMAND);
 		} else if (strcmp(command, "DEALLOC_ARENA") == 0) {
-			// TODO
+			dealloc_arena(arena);
 		} else if (strcmp(command, "ALLOC_BLOCK") == 0) {
 			// TODO
 		} else if (strcmp(command, "FREE_BLOCK") == 0) {
@@ -61,10 +106,11 @@ int main(void)
 		} else if (strcmp(command, "PMAP") == 0) {
 			// TODO
 		} else {
-			puts("Invalid command. Please try again.\n");
+			print_err(INVALID_COMMAND);
 		}
 
 		free(line);
 	}
+
 	return 0;
 }

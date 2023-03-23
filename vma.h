@@ -4,9 +4,9 @@
 #include <inttypes.h>
 #include <stddef.h>
 
-/* TODO : add your implementation for doubly-linked list */
 typedef struct {
 	void *data;
+	void *prev;
 	void *next;
 } list_t;
 

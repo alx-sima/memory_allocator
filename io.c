@@ -70,7 +70,9 @@ int read_numbers(char *s, int nr, ...)
 void print_err(enum err_codes err)
 {
 	switch (err) {
-
+	case INVALID_ALLOC_BLOCK:
+		puts("This zone was already allocated.");
+		break;
 	case INVALID_COMMAND:
 		puts("Invalid command. Please try again.");
 		break;

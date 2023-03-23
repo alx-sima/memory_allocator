@@ -23,7 +23,11 @@ int main(void)
 		} else if (strcmp(command, "DEALLOC_ARENA") == 0) {
 			dealloc_arena(arena);
 		} else if (strcmp(command, "ALLOC_BLOCK") == 0) {
-			// TODO
+			uint64_t addr, block_size;
+			if (read_numbers(args, 2, &addr, &block_size))
+				alloc_block(arena, addr, block_size);
+			else
+				print_err(INVALID_COMMAND);
 		} else if (strcmp(command, "FREE_BLOCK") == 0) {
 			// TODO
 		} else if (strcmp(command, "READ") == 0) {

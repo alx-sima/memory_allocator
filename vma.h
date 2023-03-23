@@ -14,7 +14,7 @@ struct list_t {
 typedef struct {
 	uint64_t start_address;
 	size_t size;
-	void *miniblock_list;
+	list_t *miniblock_list;
 } block_t;
 
 typedef struct {

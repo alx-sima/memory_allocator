@@ -17,13 +17,48 @@ arena_t *alloc_arena(const uint64_t size)
 	return arena;
 }
 
+void remove_item(list_t **list, list_t *item)
+{
+	list_t *next = item->next;
+	list_t *prev = item->prev;
+
+	if (prev)
+		prev->next = next;
+	else
+		*list = next;
+
+	if (next)
+		next->prev = prev;
+}
+
+void clear_list(list_t *list, void (*free_func)(void *))
+{
+	while (list) {
+		list_t *next = list->next;
+		free_func(list->data);
+		free(list);
+		list = next;
+	}
+}
+
+void free_miniblock_func(void *ptr)
+{
+	free(ptr);
+}
+
+void free_block_func(void *ptr)
+{
+	block_t *block = ptr;
+	list_t *list = block->miniblock_list;
+	clear_list(list, free_miniblock_func);
+	free(ptr);
+}
+
 void dealloc_arena(arena_t *arena)
 {
 	if (!arena)
 		return;
-
-	// TODO
-
+	clear_list(arena->alloc_list, free_block_func);
 	free(arena);
 }
 
@@ -44,6 +79,7 @@ static block_t *init_block(const uint64_t address, const uint64_t size)
 
 	miniblock->size = size;
 	miniblock->start_address = address;
+	miniblock->perm = 0b110; // TODO permisiuni placeholder.
 
 	list_t *list = malloc(sizeof(list_t));
 	if (!list) {
@@ -60,28 +96,20 @@ static block_t *init_block(const uint64_t address, const uint64_t size)
 	return block;
 }
 
-// !!!!
-static inline int interval_overlap(int l1, int r1, int l2, int r2)
-{
-	return (l1 >= l2 && l2 < r1) || (l2 >= l1 && l1 < r2);
-}
-
 static int check_overlap(list_t *prev, const uint64_t address,
 						 const uint64_t size)
 {
-	block_t *prev_block = prev->data;
-	if (interval_overlap(address, address + size - 1, prev_block->start_address,
-						 prev_block->start_address + prev_block->size - 1))
+	block_t *prev_data, *next_data;
+
+	// Blocul se suprapune cu precedentul.
+	if ((prev_data = prev->data) &&
+		address < prev_data->start_address + prev_data->size)
 		return 1;
 
-	list_t *next = prev->next;
-	if (next) {
-		block_t *next_block = next->data;
-		if (interval_overlap(address, address + size, next_block->start_address,
-							 next_block->start_address + next_block->size - 1))
-
-			return 1;
-	}
+	// Blocul se suprapune cu urmatorul.
+	if (prev->next && (next_data = prev->next->data) &&
+		address + size > next_data->start_address)
+		return 1;
 
 	return 0;
 }
@@ -109,16 +137,19 @@ void alloc_block(arena_t *arena, const uint64_t address, const uint64_t size)
 		return;
 	}
 
-	while (list_iter->next) {
-		block_t *curr_block = list_iter->data;
-		if (curr_block->start_address < address)
+	list_t *next;
+	while ((next = list_iter->next)) {
+		block_t *next_block = next->data;
+		if (address < next_block->start_address)
 			break;
 
-		list_iter = list_iter->next;
+		list_iter = next;
 	}
 
 	if (check_overlap(list_iter, address, size)) {
 		print_err(INVALID_ALLOC_BLOCK);
+		// TODO
+		free_block_func(new->data);
 		free(new);
 		return;
 	}
@@ -132,10 +163,35 @@ void alloc_block(arena_t *arena, const uint64_t address, const uint64_t size)
 
 void free_block(arena_t *arena, const uint64_t address)
 {
-	(void)arena;
-	(void)address;
+	list_t *block_iter = arena->alloc_list;
+	while (block_iter) {
+		block_t *block = block_iter->data;
+		if (address >= block->start_address) {
+			if (address >= block->start_address + block->size) {
+				print_err(INVALID_ADDRESS_FREE);
+				return;
+			}
+			list_t *miniblock_iter = block->miniblock_list;
+			while (miniblock_iter) {
+				miniblock_t *mini = miniblock_iter->data;
+				if (address == mini->start_address) {
+					remove_item(&block->miniblock_list, miniblock_iter);
 
-	// TODO
+					// Blocul este gol: se sterge.
+					if (!block->miniblock_list) {
+						remove_item(&arena->alloc_list, block_iter);
+					}
+					return;
+				}
+				miniblock_iter = miniblock_iter->next;
+			}
+
+			return;
+		}
+		block_iter = block_iter->next;
+	}
+
+	print_err(INVALID_ADDRESS_FREE);
 }
 
 void read(arena_t *arena, uint64_t address, uint64_t size)

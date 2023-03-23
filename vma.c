@@ -1,10 +1,42 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/types.h>
 
 #include "io.h"
+#include "list.h"
 #include "vma.h"
+
+void free_miniblock_func(void *data)
+{
+	free(data);
+}
+
+void free_block_func(void *data)
+{
+	block_t *block = data;
+	list_t *list = block->miniblock_list;
+	clear_list(list, free_miniblock_func);
+	free(data);
+}
+
+void print_miniblock(uint64_t index, void *data)
+{
+	miniblock_t *block = data;
+	printf("Miniblock %lu:\t\t%lu\t\t-\t\t%lu\t\t| %d\n", index,
+		   block->start_address, block->start_address + block->size,
+		   block->perm);
+}
+
+void print_block(uint64_t index, void *data)
+{
+	block_t *block = data;
+	puts("");
+	printf("Block %lu begin\n", index);
+	printf("Zone: %lu - %lu\n", block->start_address,
+		   block->start_address + block->size);
+	print_list(block->miniblock_list, print_miniblock);
+	printf("Block %lu end\n", index);
+}
 
 arena_t *alloc_arena(const uint64_t size)
 {
@@ -15,43 +47,6 @@ arena_t *alloc_arena(const uint64_t size)
 	arena->arena_size = size;
 	arena->alloc_list = NULL;
 	return arena;
-}
-
-void remove_item(list_t **list, list_t *item)
-{
-	list_t *next = item->next;
-	list_t *prev = item->prev;
-
-	if (prev)
-		prev->next = next;
-	else
-		*list = next;
-
-	if (next)
-		next->prev = prev;
-}
-
-void clear_list(list_t *list, void (*free_func)(void *))
-{
-	while (list) {
-		list_t *next = list->next;
-		free_func(list->data);
-		free(list);
-		list = next;
-	}
-}
-
-void free_miniblock_func(void *ptr)
-{
-	free(ptr);
-}
-
-void free_block_func(void *ptr)
-{
-	block_t *block = ptr;
-	list_t *list = block->miniblock_list;
-	clear_list(list, free_miniblock_func);
-	free(ptr);
 }
 
 void dealloc_arena(arena_t *arena)
@@ -107,6 +102,7 @@ static int check_overlap(list_t *prev, const uint64_t address,
 		return 1;
 
 	// Blocul se suprapune cu urmatorul.
+	// TODO
 	if (prev->next && (next_data = prev->next->data) &&
 		address + size > next_data->start_address)
 		return 1;
@@ -130,6 +126,7 @@ void alloc_block(arena_t *arena, const uint64_t address, const uint64_t size)
 		return;
 	}
 
+	// TODO
 	if (!list_iter || address < ((block_t *)list_iter->data)->start_address) {
 		new->prev = NULL;
 		new->next = list_iter;
@@ -212,33 +209,6 @@ void write(arena_t *arena, const uint64_t address, const uint64_t size,
 	(void)data;
 
 	// TODO
-}
-
-void print_list(list_t *list, void (*print_func)(uint64_t index, void *data))
-{
-	for (uint64_t i = 1; list != NULL; ++i) {
-		print_func(i, list->data);
-		list = list->next;
-	}
-}
-
-void print_miniblock(uint64_t index, void *data)
-{
-	miniblock_t *block = data;
-	printf("Miniblock %lu:\t\t%lu\t\t-\t\t%lu\t\t| %d\n", index,
-		   block->start_address, block->start_address + block->size,
-		   block->perm);
-}
-
-void print_block(uint64_t index, void *data)
-{
-	block_t *block = data;
-	puts("");
-	printf("Block %lu begin\n", index);
-	printf("Zone: %lu - %lu\n", block->start_address,
-		   block->start_address + block->size);
-	print_list(block->miniblock_list, print_miniblock);
-	printf("Block %lu end\n", index);
 }
 
 void pmap(const arena_t *arena)

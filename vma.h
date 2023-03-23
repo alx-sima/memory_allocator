@@ -1,15 +1,10 @@
 #ifndef __VMA_H
 #define __VMA_H
 
-#include <inttypes.h>
 #include <stddef.h>
+#include <stdint.h>
 
-typedef struct list_t list_t;
-struct list_t {
-	void *data;
-	list_t *prev;
-	list_t *next;
-};
+#include "list.h"
 
 typedef struct {
 	uint64_t start_address;

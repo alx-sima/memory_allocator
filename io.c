@@ -54,7 +54,7 @@ int read_numbers(char *s, int nr, ...)
 	for (int i = 0; i < nr; ++i) {
 		uint64_t *adr = va_arg(args, uint64_t *);
 
-		*adr = strtoll(s, &endptr, 10);
+		*adr = strtoll(s, &endptr, 0);
 		if (endptr == s) {
 			va_end(args);
 			return 0;

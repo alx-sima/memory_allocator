@@ -4,11 +4,12 @@
 #include <inttypes.h>
 #include <stddef.h>
 
-typedef struct {
+typedef struct list_t list_t;
+struct list_t {
 	void *data;
-	void *prev;
-	void *next;
-} list_t;
+	list_t *prev;
+	list_t *next;
+};
 
 typedef struct {
 	uint64_t start_address;

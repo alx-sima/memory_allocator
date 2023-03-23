@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/types.h>
 
 #include "io.h"
 #include "vma.h"
@@ -125,7 +126,7 @@ void alloc_block(arena_t *arena, const uint64_t address, const uint64_t size)
 	new->next = list_iter->next;
 
 	if (new->next)
-		((list_t *)list_iter->next)->prev = new;
+		list_iter->next->prev = new;
 	list_iter->next = new;
 }
 
@@ -157,6 +158,33 @@ void write(arena_t *arena, const uint64_t address, const uint64_t size,
 	// TODO
 }
 
+void print_list(list_t *list, void (*print_func)(uint64_t index, void *data))
+{
+	for (uint64_t i = 1; list != NULL; ++i) {
+		print_func(i, list->data);
+		list = list->next;
+	}
+}
+
+void print_miniblock(uint64_t index, void *data)
+{
+	miniblock_t *block = data;
+	printf("Miniblock %lu:\t\t%lu\t\t-\t\t%lu\t\t| %d\n", index,
+		   block->start_address, block->start_address + block->size,
+		   block->perm);
+}
+
+void print_block(uint64_t index, void *data)
+{
+	block_t *block = data;
+	puts("");
+	printf("Block %lu begin\n", index);
+	printf("Zone: %lu - %lu\n", block->start_address,
+		   block->start_address + block->size);
+	print_list(block->miniblock_list, print_miniblock);
+	printf("Block %lu end\n", index);
+}
+
 void pmap(const arena_t *arena)
 {
 	puts("Total memory: TODO");
@@ -164,26 +192,7 @@ void pmap(const arena_t *arena)
 	puts("Number of allocated blocks: TODO");
 	puts("Number of allocated miniblocks: TODO");
 
-	list_t *list_iter = arena->alloc_list;
-	for (uint64_t block_no = 1; list_iter != NULL; ++block_no) {
-		block_t *block = list_iter->data;
-		puts("");
-		printf("Block %lu begin\n", block_no);
-		printf("Zone: %lu - %lu\n", block->start_address,
-			   block->start_address + block->size);
-
-		list_t *block_iter = block->miniblock_list;
-		for (uint64_t miniblock_no = 1; block_iter != NULL; ++miniblock_no) {
-			miniblock_t *miniblock = block_iter->data;
-			printf("Miniblock %lu:\t\t%lu\t\t-\t\t%lu\t\t| %d\n", miniblock_no,
-				   miniblock->start_address,
-				   miniblock->start_address + miniblock->size, miniblock->perm);
-			block_iter = block_iter->next;
-		}
-
-		printf("Block %lu end\n", block_no);
-		list_iter = list_iter->next;
-	}
+	print_list(arena->alloc_list, print_block);
 }
 
 void mprotect(arena_t *arena, uint64_t address, int8_t *permission)

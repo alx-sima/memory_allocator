@@ -11,7 +11,7 @@ char *read_line()
 	char buffer[BUFSIZ];
 
 	// Initial se aloca un string "gol" (care contine doar un '\0').
-	char *line = calloc(1, sizeof(char));
+	char *line = NULL;
 	size_t line_length = 1;
 
 	while (fgets(buffer, BUFSIZ, stdin)) {
@@ -24,8 +24,12 @@ char *read_line()
 			return NULL;
 		}
 		line = temp;
+
 		// Se concateneaza caracterele citite in aceasta transa la rezultat.
-		strncat(line, buffer, buffer_len);
+		if (line_length - buffer_len == 1)
+			strncpy(line, buffer, buffer_len);
+		else
+			strncat(line, buffer, buffer_len);
 
 		// Daca ultimul caracter citit este newline,
 		// s-a terminat de citit linia.

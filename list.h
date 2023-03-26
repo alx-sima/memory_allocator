@@ -14,14 +14,31 @@ struct list_t {
 };
 
 /*
+ * Aloca un nou nod de lista, care contine informatia `data`.
+ */
+list_t *encapsulate(void *data);
+
+/*
+ * Returneaza ultimul element al listei `list` (sau NULL daca nu exista).
+ */
+list_t *last_item(list_t *list);
+
+/*
+ * Insereaza in `list` nodul `item` dupa `node.
+ */
+void insert_after(list_t **list, list_t *node, list_t *item);
+
+void merge_lists(list_t *dest, list_t *source);
+
+/*
  * Sterge `item` din `list`, refacand legaturile intre celelalte
- * noduri si actualizeaza capul listei daca este necesar. 
+ * noduri si actualizeaza capul listei daca este necesar.
  */
 void remove_item(list_t **list, list_t *item);
 
 /*
  * Elibereaza toate nodurile din `list`, aplicand `free_func(nod)`
- * pentru a elibera valorile stocate in noduri. 
+ * pentru a elibera valorile stocate in noduri.
  */
 void clear_list(list_t *list, void (*free_func)(void *data));
 

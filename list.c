@@ -3,6 +3,58 @@
 
 #include "list.h"
 
+list_t *encapsulate(void *data)
+{
+	list_t *node = malloc(sizeof(list_t));
+	if (!node)
+		return NULL;
+
+	node->data = data;
+	node->prev = NULL;
+	node->next = NULL;
+
+	return node;
+}
+
+list_t *last_item(list_t *list)
+{
+	if (!list)
+		return NULL;
+
+	while (list->next)
+		list = list->next;
+
+	return list;
+}
+
+void insert_after(list_t **list, list_t *node, list_t *item)
+{
+	if (!node) {
+		item->next = *list;
+		item->prev = NULL;
+		if (*list)
+			(*list)->prev = item;
+		*list = item;
+		return;
+	}
+
+	item->prev = node;
+	item->next = node->next;
+	if (item->next)
+		item->next->prev = item;
+	node->next = item;
+}
+
+void merge_lists(list_t *dest, list_t *source)
+{
+	dest = last_item(dest);
+	if (!dest || !source)
+		return;
+
+	dest->next = source;
+	source->prev = dest;
+}
+
 void remove_item(list_t **list, list_t *item)
 {
 	list_t *next = item->next;

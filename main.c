@@ -31,6 +31,12 @@ int main(void)
 			else
 				print_err(INVALID_COMMAND);
 		} else if (strcmp(command, "FREE_BLOCK") == 0) {
+			uint64_t address;
+			if (read_numbers(args, 1, &address))
+				free_block(arena, address);
+			else
+				print_err(INVALID_COMMAND);
+
 			// TODO
 		} else if (strcmp(command, "READ") == 0) {
 			// TODO

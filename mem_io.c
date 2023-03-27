@@ -24,7 +24,7 @@ static void print_miniblock(void *data, void *args)
 	uint64_t *index = args;
 	char perm[PERM_LEN + 1] = "RWX";
 	get_perm(block->perm, perm);
-	printf("Miniblock %lu:\t\t%lu\t\t-\t\t%lu\t\t| %s\n", (*index)++,
+	printf("Miniblock %lu:\t\t0x%lX\t\t-\t\t0x%lX\t\t| %s\n", (*index)++,
 		   block->start_address, block->start_address + block->size, perm);
 }
 

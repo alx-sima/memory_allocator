@@ -1,3 +1,4 @@
+#include <alloca.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -47,7 +48,17 @@ int main(void)
 			else
 				print_err(INVALID_COMMAND);
 		} else if (strcmp(command, "WRITE") == 0) {
+			uint64_t address, size;
+			char *data_begin = read_numbers(args, 2, &address, &size) + 1;
+			char *buffer = alloca(size);
+			if (!buffer)
+				return 1; // TODO
+			uint64_t bytes_read = strlen(data_begin) + 1;
+			strncpy(buffer, data_begin, bytes_read);
 			// TODO
+			// fread(buffer + bytes_read, sizeof(char), size - bytes_read,
+			// stdin);
+			write(arena, address, size, (int8_t *)buffer);
 		} else if (strcmp(command, "PMAP") == 0) {
 			pmap(arena);
 		} else {
@@ -56,6 +67,5 @@ int main(void)
 
 		free(line);
 	}
-
 	return 0;
 }

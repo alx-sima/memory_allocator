@@ -5,6 +5,8 @@
 
 #define PERM_LEN 3
 
+list_t *access_block(arena_t *arena, const uint64_t address);
+
 void read(arena_t *arena, uint64_t address, uint64_t size);
 void write(arena_t *arena, const uint64_t address, const uint64_t size,
 		   int8_t *data);

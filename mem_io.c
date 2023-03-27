@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "io.h"
+#include "list.h"
 #include "mem_io.h"
 #include "vma.h"
 
@@ -47,44 +48,57 @@ static void print_block(void *data, void *args)
 	printf("Block %lu end\n", (*block_nr)++);
 }
 
+list_t *access_block(arena_t *arena, const uint64_t address)
+{
+	list_t *iter = arena->alloc_list;
+	while (iter) {
+		block_t *block = iter->data;
+
+		if (address < block->start_address + block->size) {
+			if (address >= block->start_address)
+				return iter;
+			return NULL;
+		}
+
+		iter = iter->next;
+	}
+	return NULL;
+}
+
 list_t *access_adress(arena_t *arena, const uint64_t address)
 {
-	list_t *block_iter = arena->alloc_list;
-	while (block_iter) {
-		block_t *block = block_iter->data;
-		block_iter = block_iter->next;
-
-		if (address < block->start_address)
-			continue;
-
-		list_t *miniblock_iter = block->miniblock_list;
-		while (miniblock_iter) {
-			miniblock_t *miniblock = miniblock_iter->data;
-
-			if (address >= miniblock->start_address &&
-				address < miniblock->start_address + miniblock->size)
-				return miniblock_iter;
-
-			miniblock_iter = miniblock_iter->next;
-		}
+	list_t *block_list = access_block(arena, address);
+	if (!block_list)
 		return NULL;
+
+	block_t *block = block_list->data;
+	list_t *iter = block->miniblock_list;
+	while (iter) {
+		miniblock_t *miniblock = iter->data;
+
+		if (address == miniblock->start_address)
+			return iter;
+
+		iter = iter->next;
 	}
 	return NULL;
 }
 
 void read(arena_t *arena, uint64_t address, uint64_t size)
 {
-	list_t *miniblock_list = access_adress(arena, address);
-	if (!miniblock_list) {
+	list_t *miniblock_iter = access_adress(arena, address);
+	if (!miniblock_iter) {
 		print_err(INVALID_ADDRESS_READ);
 		return;
 	}
 
 	char *buffer = alloca(size);
 	uint64_t bytes_read = 0;
-	while (miniblock_list) {
-		miniblock_t *miniblock = miniblock_list->data;
-		if (bytes_read + miniblock->size > size) {
+	while (miniblock_iter) {
+		miniblock_t *miniblock = miniblock_iter->data;
+		miniblock_iter = miniblock_iter->next;
+
+		if (bytes_read + miniblock->size >= size) {
 			memcpy(buffer + bytes_read, miniblock->rw_buffer,
 				   size - bytes_read);
 			fwrite(buffer, sizeof(char), bytes_read, stdout);
@@ -94,10 +108,9 @@ void read(arena_t *arena, uint64_t address, uint64_t size)
 
 		memcpy(buffer + bytes_read, miniblock->rw_buffer, miniblock->size);
 		bytes_read += miniblock->size;
-		miniblock_list = miniblock_list->next;
 	}
 
-	printf("Warning: size was bigger than the block size. Writing %lu "
+	printf("Warning: size was bigger than the block size. Reading %lu "
 		   "characters.\n",
 		   bytes_read);
 	fwrite(buffer, sizeof(char), bytes_read, stdout);
@@ -112,7 +125,33 @@ void write(arena_t *arena, const uint64_t address, const uint64_t size,
 	(void)size;
 	(void)data;
 
-	// TODO
+	list_t *miniblock_iter = access_adress(arena, address);
+	if (!miniblock_iter) {
+		print_err(INVALID_ADDRES_WRITE);
+		return;
+	}
+
+	miniblock_t *miniblock = miniblock_iter->data;
+	uint64_t bytes_written = 0;
+	void *write_addr =
+		miniblock->rw_buffer + address - miniblock->start_address;
+	for (;;) {
+		if (bytes_written + miniblock->size >= size) {
+			memcpy(write_addr, data + bytes_written, size - bytes_written);
+			return;
+		}
+		memcpy(write_addr, data + bytes_written, miniblock->size);
+		bytes_written += miniblock->size;
+
+		miniblock_iter = miniblock_iter->next;
+		if (!miniblock_iter)
+			break;
+		miniblock = miniblock_iter->data;
+		write_addr = miniblock->rw_buffer;
+	}
+	printf("Warning: size was bigger than the block size. Writing %lu "
+		   "characters.\n",
+		   bytes_written);
 }
 
 void pmap(const arena_t *arena)
@@ -133,8 +172,8 @@ void pmap(const arena_t *arena)
 		++no_blocks;
 		block_iter = block_iter->next;
 	}
-	printf("Total memory: 0x%lX\n", arena->arena_size);
-	printf("Free memory: 0x%lX\n", free_memory);
+	printf("Total memory: 0x%lX bytes\n", arena->arena_size);
+	printf("Free memory: 0x%lX bytes\n", free_memory);
 	printf("Number of allocated blocks: %lu\n", no_blocks);
 	printf("Number of allocated miniblocks: %lu\n", no_miniblocks);
 

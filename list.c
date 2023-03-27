@@ -1,3 +1,4 @@
+#include <stdarg.h>
 #include <stdint.h>
 #include <stdlib.h>
 
@@ -59,12 +60,10 @@ void remove_item(list_t **list, list_t *item)
 {
 	list_t *next = item->next;
 	list_t *prev = item->prev;
-
 	if (prev)
 		prev->next = next;
 	else
 		*list = next;
-
 	if (next)
 		next->prev = prev;
 }

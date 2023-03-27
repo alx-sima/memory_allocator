@@ -1,4 +1,5 @@
 #include <alloca.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,11 +12,11 @@
 int main(void)
 {
 	arena_t *arena = NULL;
-	char *line;
-	// TODO: getline
-	while ((line = read_line())) {
-		char *command = strtok(line, " ");
-		char *args = strtok(NULL, "");
+	char *line = NULL;
+	size_t line_size = 0;
+	while (read_line(&line, &line_size)) {
+		char *command = strtok(line, "\n ");
+		char *args = strtok(NULL, "\n");
 
 		if (strcmp(command, "ALLOC_ARENA") == 0) {
 			uint64_t size;
@@ -39,8 +40,6 @@ int main(void)
 				free_block(arena, address);
 			else
 				print_err(INVALID_COMMAND);
-
-			// TODO
 		} else if (strcmp(command, "READ") == 0) {
 			uint64_t address, size;
 			if (*read_numbers(args, 2, &address, &size) == '\0')
@@ -50,9 +49,7 @@ int main(void)
 		} else if (strcmp(command, "WRITE") == 0) {
 			uint64_t address, size;
 			char *data_begin = read_numbers(args, 2, &address, &size) + 1;
-			char *buffer = alloca(size);
-			if (!buffer)
-				return 1; // TODO
+			char *buffer = alloca(sizeof(char) * size);
 			uint64_t bytes_read = strlen(data_begin) + 1;
 			strncpy(buffer, data_begin, bytes_read);
 			// TODO
@@ -64,8 +61,7 @@ int main(void)
 		} else {
 			print_err(INVALID_COMMAND);
 		}
-
-		free(line);
 	}
+	free(line);
 	return 0;
 }

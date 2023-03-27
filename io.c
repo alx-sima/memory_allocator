@@ -1,4 +1,5 @@
 #include <stdarg.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -6,44 +7,28 @@
 
 #include "io.h"
 
-char *read_line(void)
+size_t read_line(char **str, size_t *size)
 {
 	char buffer[BUFSIZ];
 
-	// Initial se aloca un string "gol" (care contine doar un '\0').
-	char *line = NULL;
-	size_t line_length = 1;
-
+	size_t line_len = 0;
 	while (fgets(buffer, BUFSIZ, stdin)) {
-		size_t buffer_len = strlen(buffer);
-		line_length += buffer_len;
+		size_t buffer_siz = strlen(buffer) + 1;
 
-		char *temp = realloc(line, line_length);
-		if (!temp) {
-			free(line);
-			return NULL;
+		if (line_len + buffer_siz > *size) {
+			char *tmp = realloc(*str, sizeof(char) * (line_len + buffer_siz));
+			if (!tmp)
+				return 0;
+			*size = line_len + buffer_siz;
+			*str = tmp;
 		}
-		line = temp;
 
-		// Se concateneaza caracterele citite in aceasta transa la rezultat.
-		if (line_length - buffer_len == 1)
-			strncpy(line, buffer, buffer_len);
-		else
-			strncat(line, buffer, buffer_len);
-
-		// Daca ultimul caracter citit este newline,
-		// s-a terminat de citit linia.
-		if (line[line_length - 2] == '\n') {
-			// Se elimina newline-ul.
-			line[line_length - 2] = '\0';
-			return line;
-		}
+		strncpy(*str + line_len, buffer, buffer_siz);
+		line_len += buffer_siz - 1;
+		if ((*str)[line_len - 1] == '\n')
+			return line_len;
 	}
-
-	// In cazul in care nu s-a putut citi linia,
-	// se elibereaza stringul si se intoarce NULL.
-	free(line);
-	return NULL;
+	return 0;
 }
 
 char *read_numbers(char *str, int nr, ...)

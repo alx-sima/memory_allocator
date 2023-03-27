@@ -1,6 +1,8 @@
 #ifndef __IO_H
 #define __IO_H
 
+#include <stddef.h>
+
 /*
  * Coduri de eroare
  */
@@ -13,10 +15,11 @@ enum err_codes {
 };
 
 /*
- * Citeste de la tastatura o linie cu lungime necunoscuta
- * (alocand stringul pe heap).
+ * Citeste de la tastatura o linie cu lungime necunoscuta, retinand rezultatul
+ * in `*str` de lungime `*size`, pe care il (re)aloca dinamic, daca este
+ * necesar. Returneaza nr. de octeti cititi.
  */
-char *read_line(void);
+size_t read_line(char **str, size_t *size);
 
 /*
  * Parseaza stringul `str`, citind `nr` numere si

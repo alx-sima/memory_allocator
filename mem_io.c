@@ -92,7 +92,7 @@ void read(arena_t *arena, uint64_t address, uint64_t size)
 		return;
 	}
 
-	char *buffer = alloca(size);
+	char *buffer = alloca(sizeof(char) * size);
 	uint64_t bytes_read = 0;
 	while (miniblock_iter) {
 		miniblock_t *miniblock = miniblock_iter->data;

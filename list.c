@@ -78,10 +78,10 @@ void clear_list(list_t *list, void (*free_func)(void *))
 	}
 }
 
-void print_list(list_t *list, void (*print_func)(uint64_t, void *))
+void apply_func(list_t *list, void (*func)(void *data, void *args), void *args)
 {
-	for (uint64_t i = 1; list != NULL; ++i) {
-		print_func(i, list->data);
+	while (list) {
+		func(list->data, args);
 		list = list->next;
 	}
 }

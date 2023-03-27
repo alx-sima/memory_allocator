@@ -40,12 +40,8 @@ void remove_item(list_t **list, list_t *item);
  * Elibereaza toate nodurile din `list`, aplicand `free_func(nod)`
  * pentru a elibera valorile stocate in noduri.
  */
-void clear_list(list_t *list, void (*free_func)(void *data));
+void clear_list(list_t *list, void (*free_func)(void *item));
 
-/*
- * Aplica functia `print_func(index, nod)` pentru
- * fiecare element din lista `list`.
- */
-void print_list(list_t *list, void (*print_func)(uint64_t index, void *data));
+void apply_func(list_t *list, void (*func)(void *data, void *args), void *args);
 
 #endif // __LIST_H

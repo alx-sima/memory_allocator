@@ -6,7 +6,7 @@
 
 #include "io.h"
 
-char *read_line()
+char *read_line(void)
 {
 	char buffer[BUFSIZ];
 

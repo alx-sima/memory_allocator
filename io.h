@@ -14,7 +14,7 @@ enum err_codes {
  * Citeste de la tastatura o linie cu lungime necunoscuta
  * (alocand stringul pe heap).
  */
-char *read_line();
+char *read_line(void);
 
 /*
  * Parseaza stringul `s`, citind **exact** `nr` numere si

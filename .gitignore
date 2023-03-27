@@ -1,6 +1,14 @@
-.gdb_history
+# checker files
+/check_utils/
+/cs/
+/tasks/
+/check
 
-vma
+# test files
+/input*.txt
 
-vgcore.*
-*.o
+# build and debug files
+/.gdb_history
+/vgcore.*
+/*.o
+/vma

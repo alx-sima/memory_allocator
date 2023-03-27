@@ -7,8 +7,12 @@
 #include "list.h"
 #include "vma.h"
 
+#define PERM_LEN 3
+
 void free_miniblock_data(void *data)
 {
+	miniblock_t *miniblock = data;
+	free(miniblock->rw_buffer);
 	free(data);
 }
 
@@ -20,23 +24,45 @@ void free_block_data(void *data)
 	free(data);
 }
 
-void print_miniblock(uint64_t index, void *data)
+static void get_perm(u_int8_t perm, char perm_str[PERM_LEN + 1])
+{
+	for (u_int8_t i = 0; i < PERM_LEN; ++i)
+		if (perm & (0b1 << i))
+			;
+}
+
+/*
+ * Printeaza informatia miniblocului de la adresa `data`.
+ * `args` trebuie sa pointeze la un long (indexul miniblocului).
+ */
+void print_miniblock(void *data, void *args)
 {
 	miniblock_t *block = data;
-	printf("Miniblock %lu:\t\t%lu\t\t-\t\t%lu\t\t| %s\n", index,
+	uint64_t *index = args;
+	char perm[PERM_LEN + 1] = "RWX";
+	get_perm(block->perm, perm);
+	printf("Miniblock %lu:\t\t%lu\t\t-\t\t%lu\t\t| %s\n", (*index)++,
 		   block->start_address, block->start_address + block->size,
 		   "RW-" /* TODO */);
 }
 
-void print_block(uint64_t index, void *data)
+/*
+ * Printeaza informatia blocului de la adresa `data`.
+ * `args` trebuie sa pointeze la 1 long (indexul blocului).
+ */
+void print_block(void *data, void *args)
 {
 	block_t *block = data;
-	puts("");
-	printf("Block %lu begin\n", index);
+	uint64_t *block_nr = args;
+
+	printf("\nBlock %lu begin\n", *block_nr);
 	printf("Zone: %lX - %lX\n", block->start_address,
 		   block->start_address + block->size);
-	print_list(block->miniblock_list, print_miniblock);
-	printf("Block %lu end\n", index);
+
+	uint64_t miniblock_index = 1;
+	apply_func(block->miniblock_list, print_miniblock, &miniblock_index);
+
+	printf("Block %lu end\n", (*block_nr)++);
 }
 
 arena_t *alloc_arena(const uint64_t size)
@@ -66,7 +92,12 @@ static miniblock_t *init_miniblock(const uint64_t address, const uint64_t size)
 
 	miniblock->size = size;
 	miniblock->start_address = address;
-	miniblock->perm = 0b110; // TODO permisiuni placeholder.
+	miniblock->perm = 0b110;			 // TODO permisiuni placeholder.
+	miniblock->rw_buffer = malloc(size); // TODO clarificare cerinta
+	if (!miniblock->rw_buffer) {
+		free(miniblock);
+		return NULL;
+	}
 	return miniblock;
 }
 
@@ -99,7 +130,7 @@ static block_t *init_block(const uint64_t address, const uint64_t size)
 /*
  * Verifica daca blocul `next` incepe inainte sa se termine blocul `prev`.
  */
-inline static int check_overlap(block_t *prev, block_t *next)
+static inline int check_overlap(block_t *prev, block_t *next)
 {
 	if (!prev || !next)
 		return 0;
@@ -197,8 +228,8 @@ void alloc_block(arena_t *arena, const uint64_t address, const uint64_t size)
 	// se aloca un bloc nou dupa acesta.
 	if (prev_block == new_block) {
 		list_t *new = encapsulate(new_block);
-		// TODO
-		if (!new) {}
+		if (!new)
+			; // TODO
 		insert_after(&arena->alloc_list, prev, new);
 	}
 }
@@ -218,49 +249,49 @@ void free_block(arena_t *arena, const uint64_t address)
 			uint64_t prev_miniblocks_size = 0;
 			while (miniblock_iter) {
 				miniblock_t *mini = miniblock_iter->data;
-				if (address == mini->start_address) {
-					remove_item(&block->miniblock_list, miniblock_iter);
+				if (address != mini->start_address) {
+					miniblock_iter = miniblock_iter->next;
+					prev_miniblocks_size += mini->size;
+					continue;
+				}
+				remove_item(&block->miniblock_list, miniblock_iter);
 
-					// Blocul este gol: se sterge.
-					if (!block->miniblock_list) {
-						remove_item(&arena->alloc_list, block_iter);
-						// TODO
-						free_miniblock_data(mini);
-						free(miniblock_iter);
-						free_block_data(block);
-						free(block_iter);
-						return;
-					}
-					if (miniblock_iter->prev && miniblock_iter->next) {
-						block_t *new_block = malloc(sizeof(block_t));
-						if (!new_block) {
-							// TODO
-							return;
-						}
-						new_block->miniblock_list = miniblock_iter->next;
-						new_block->start_address =
-							((miniblock_t *)miniblock_iter->next->data)
-								->start_address;
-						new_block->size =
-							block->size - new_block->start_address;
-						block->size = prev_miniblocks_size;
-						miniblock_iter->next->prev = NULL;
-						miniblock_iter->prev->next = NULL;
-						// TODO new_block->size
-						insert_after(NULL, block_iter,
-									 encapsulate(new_block)); // !
-
-					} else {
-						if (!miniblock_iter->prev)
-							block->start_address = mini->start_address;
-						block->size -= mini->size;
-					}
+				// Blocul este gol: se sterge.
+				if (!block->miniblock_list) {
+					remove_item(&arena->alloc_list, block_iter);
+					// TODO
 					free_miniblock_data(mini);
 					free(miniblock_iter);
+					free_block_data(block);
+					free(block_iter);
 					return;
 				}
-				miniblock_iter = miniblock_iter->next;
-				prev_miniblocks_size += mini->size;
+				if (miniblock_iter->prev && miniblock_iter->next) {
+					block_t *new_block = malloc(sizeof(block_t));
+					if (!new_block) {
+						// TODO
+						return;
+					}
+					new_block->miniblock_list = miniblock_iter->next;
+					new_block->start_address =
+						((miniblock_t *)miniblock_iter->next->data)
+							->start_address;
+					new_block->size = block->size - new_block->start_address;
+					block->size = prev_miniblocks_size;
+					miniblock_iter->next->prev = NULL;
+					miniblock_iter->prev->next = NULL;
+					// TODO new_block->size
+					insert_after(NULL, block_iter,
+								 encapsulate(new_block)); // !
+
+				} else {
+					if (!miniblock_iter->prev)
+						block->start_address = mini->start_address;
+					block->size -= mini->size;
+				}
+				free_miniblock_data(mini);
+				free(miniblock_iter);
+				return;
 			}
 
 			return;
@@ -314,7 +345,9 @@ void pmap(const arena_t *arena)
 	printf("Number of allocated blocks: %lu\n", no_blocks);
 	printf("Number of allocated miniblocks: %lu\n", no_miniblocks);
 
-	print_list(arena->alloc_list, print_block);
+	uint64_t block_index = 1;
+	apply_func(arena->alloc_list, print_block, &block_index);
+	// print_list(arena->alloc_list, print_block);
 }
 
 void mprotect(arena_t *arena, uint64_t address, int8_t *permission)

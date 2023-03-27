@@ -46,29 +46,28 @@ char *read_line(void)
 	return NULL;
 }
 
-int read_numbers(char *s, int nr, ...)
+char *read_numbers(char *str, int nr, ...)
 {
-	if (!s)
+	if (!str)
 		return 0;
 
 	va_list args;
 	va_start(args, nr);
 
-	char *endptr = s;
+	char *next_char = str;
 	for (int i = 0; i < nr; ++i) {
 		uint64_t *adr = va_arg(args, uint64_t *);
 
-		*adr = strtoll(s, &endptr, 0);
-		if (endptr == s) {
+		*adr = strtoll(str, &next_char, 0);
+		if (next_char == str) {
 			va_end(args);
 			return 0;
 		}
-		s = endptr;
+		str = next_char;
 	}
 
 	va_end(args);
-	// Nu mai exista caractere de citit.
-	return *endptr == '\0';
+	return next_char;
 }
 
 void print_err(enum err_codes err)

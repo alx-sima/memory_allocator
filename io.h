@@ -19,11 +19,11 @@ enum err_codes {
 char *read_line(void);
 
 /*
- * Parseaza stringul `s`, citind **exact** `nr` numere si
+ * Parseaza stringul `str`, citind `nr` numere si
  * stocandu-le la adresele date ca parametru.
- * Returneaza 1 daca citirea s-a realizat cu succes.
+ * Returneaza adresa urmatorului caracter.
  */
-int read_numbers(char *s, int nr, ...);
+char *read_numbers(char *str, int nr, ...);
 
 /*
  * Printeaza mesajul de eroare corespunzator codului `err`.

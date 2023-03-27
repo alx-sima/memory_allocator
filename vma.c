@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/types.h>
 
 #include "io.h"
 #include "list.h"
@@ -22,9 +23,9 @@ void free_block_data(void *data)
 void print_miniblock(uint64_t index, void *data)
 {
 	miniblock_t *block = data;
-	printf("Miniblock %lu:\t\t%lu\t\t-\t\t%lu\t\t| %d\n", index,
+	printf("Miniblock %lu:\t\t%lu\t\t-\t\t%lu\t\t| %s\n", index,
 		   block->start_address, block->start_address + block->size,
-		   block->perm);
+		   "RW-" /* TODO */);
 }
 
 void print_block(uint64_t index, void *data)
@@ -95,15 +96,23 @@ static block_t *init_block(const uint64_t address, const uint64_t size)
 	return block;
 }
 
+/*
+ * Verifica daca blocul `next` incepe inainte sa se termine blocul `prev`.
+ */
 inline static int check_overlap(block_t *prev, block_t *next)
 {
 	if (!prev || !next)
 		return 0;
 
-	// Blocurile se suprapun.
 	return next->start_address < prev->start_address + prev->size;
 }
 
+/*
+ * Daca blocurile `prev` si `next` sunt adiacente, se
+ * muta miniblocurile in `prev` si se elibereaza `next`.
+ *
+ * Returneaza blocul in care se afla nodurile din `next` dupa operatie.
+ */
 block_t *merge_adjacent_blocks(block_t *prev, block_t *next)
 {
 	if (!prev)
@@ -121,12 +130,15 @@ block_t *merge_adjacent_blocks(block_t *prev, block_t *next)
 	return next;
 }
 
+/*
+ * Returneaza ultimul nod cu adresa de start
+ * mai mica decat `address` (daca exista).
+ */
 static list_t *get_prev_block(list_t *list, const uint64_t address)
 {
 	block_t *data = list->data;
 	if (address < data->start_address)
 		return NULL;
-	return list;
 
 	list_t *next;
 	while ((next = list->next)) {
@@ -254,10 +266,26 @@ void write(arena_t *arena, const uint64_t address, const uint64_t size,
 
 void pmap(const arena_t *arena)
 {
-	puts("Total memory: TODO");
-	puts("Free memory: TODO");
-	puts("Number of allocated blocks: TODO");
-	puts("Number of allocated miniblocks: TODO");
+	// TODO refactor
+	uint64_t no_blocks = 0;
+	uint64_t no_miniblocks = 0;
+	uint64_t free_memory = arena->arena_size;
+	list_t *block_iter = arena->alloc_list;
+	while (block_iter) {
+		block_t *block = block_iter->data;
+		free_memory -= block->size;
+		list_t *miniblock_iter = block->miniblock_list;
+		while (miniblock_iter) {
+			++no_miniblocks;
+			miniblock_iter = miniblock_iter->next;
+		}
+		++no_blocks;
+		block_iter = block_iter->next;
+	}
+	printf("Total memory: %lu\n", arena->arena_size);
+	printf("Free memory: %lu\n", free_memory);
+	printf("Number of allocated blocks: %lu\n", no_blocks);
+	printf("Number of allocated miniblocks: %lu\n", no_miniblocks);
 
 	print_list(arena->alloc_list, print_block);
 }

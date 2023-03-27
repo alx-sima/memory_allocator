@@ -1,13 +1,10 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/types.h>
 
 #include "io.h"
 #include "list.h"
 #include "vma.h"
-
-#define PERM_LEN 3
 
 void free_miniblock_data(void *data)
 {
@@ -22,47 +19,6 @@ void free_block_data(void *data)
 	list_t *list = block->miniblock_list;
 	clear_list(list, free_miniblock_data);
 	free(data);
-}
-
-static void get_perm(u_int8_t perm, char perm_str[PERM_LEN + 1])
-{
-	for (u_int8_t i = 0; i < PERM_LEN; ++i)
-		if (perm & (0b1 << i))
-			;
-}
-
-/*
- * Printeaza informatia miniblocului de la adresa `data`.
- * `args` trebuie sa pointeze la un long (indexul miniblocului).
- */
-void print_miniblock(void *data, void *args)
-{
-	miniblock_t *block = data;
-	uint64_t *index = args;
-	char perm[PERM_LEN + 1] = "RWX";
-	get_perm(block->perm, perm);
-	printf("Miniblock %lu:\t\t%lu\t\t-\t\t%lu\t\t| %s\n", (*index)++,
-		   block->start_address, block->start_address + block->size,
-		   "RW-" /* TODO */);
-}
-
-/*
- * Printeaza informatia blocului de la adresa `data`.
- * `args` trebuie sa pointeze la 1 long (indexul blocului).
- */
-void print_block(void *data, void *args)
-{
-	block_t *block = data;
-	uint64_t *block_nr = args;
-
-	printf("\nBlock %lu begin\n", *block_nr);
-	printf("Zone: %lX - %lX\n", block->start_address,
-		   block->start_address + block->size);
-
-	uint64_t miniblock_index = 1;
-	apply_func(block->miniblock_list, print_miniblock, &miniblock_index);
-
-	printf("Block %lu end\n", (*block_nr)++);
 }
 
 arena_t *alloc_arena(const uint64_t size)
@@ -229,7 +185,7 @@ void alloc_block(arena_t *arena, const uint64_t address, const uint64_t size)
 	if (prev_block == new_block) {
 		list_t *new = encapsulate(new_block);
 		if (!new)
-			; // TODO
+			return; // TODO
 		insert_after(&arena->alloc_list, prev, new);
 	}
 }
@@ -300,54 +256,6 @@ void free_block(arena_t *arena, const uint64_t address)
 	}
 
 	print_err(INVALID_ADDRESS_FREE);
-}
-
-void read(arena_t *arena, uint64_t address, uint64_t size)
-{
-	(void)arena;
-	(void)address;
-	(void)size;
-
-	// TODO
-}
-
-void write(arena_t *arena, const uint64_t address, const uint64_t size,
-		   int8_t *data)
-{
-	(void)arena;
-	(void)address;
-	(void)size;
-	(void)data;
-
-	// TODO
-}
-
-void pmap(const arena_t *arena)
-{
-	// TODO refactor
-	uint64_t no_blocks = 0;
-	uint64_t no_miniblocks = 0;
-	uint64_t free_memory = arena->arena_size;
-	list_t *block_iter = arena->alloc_list;
-	while (block_iter) {
-		block_t *block = block_iter->data;
-		free_memory -= block->size;
-		list_t *miniblock_iter = block->miniblock_list;
-		while (miniblock_iter) {
-			++no_miniblocks;
-			miniblock_iter = miniblock_iter->next;
-		}
-		++no_blocks;
-		block_iter = block_iter->next;
-	}
-	printf("Total memory: 0x%lX\n", arena->arena_size);
-	printf("Free memory: 0x%lX\n", free_memory);
-	printf("Number of allocated blocks: %lu\n", no_blocks);
-	printf("Number of allocated miniblocks: %lu\n", no_miniblocks);
-
-	uint64_t block_index = 1;
-	apply_func(arena->alloc_list, print_block, &block_index);
-	// print_list(arena->alloc_list, print_block);
 }
 
 void mprotect(arena_t *arena, uint64_t address, int8_t *permission)

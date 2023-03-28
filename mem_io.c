@@ -6,19 +6,8 @@
 #include "io.h"
 #include "list.h"
 #include "mem_io.h"
+#include "mem_prot.h"
 #include "vma.h"
-
-static void get_perm_str(u8 perm, char perm_str[PERM_LEN + 1])
-{
-	for (u8 i = 0; i < PERM_LEN; ++i)
-		if (~perm & (0b1 << i))
-			perm_str[PERM_LEN - i - 1] = '-';
-}
-
-static inline int check_perm(miniblock_t *miniblock, enum perm_bits perm)
-{
-	return miniblock->perm & perm;
-}
 
 /*
  * Printeaza informatia miniblocului de la adresa `data`.
@@ -28,7 +17,7 @@ static void print_miniblock(void *data, void *args)
 {
 	miniblock_t *block = data;
 	u64 *index = args;
-	char perm[PERM_LEN + 1] = "RWX";
+	char perm[PERM_LEN + 1];
 	get_perm_str(block->perm, perm);
 	printf("Miniblock %llu:\t\t0x%llX\t\t-\t\t0x%llX\t\t| %s\n", (*index)++,
 		   block->start_address, block->start_address + block->size, perm);
@@ -191,16 +180,4 @@ void pmap(const arena_t *arena)
 
 	u64 block_index = 1;
 	apply_func(arena->alloc_list, print_block, &block_index);
-}
-
-void mprotect(arena_t *arena, u64 address, u8 permission)
-{
-	list_t *miniblock_node = access_miniblock(arena, address);
-	if (!miniblock_node) {
-		print_err(INVALID_ADDRESS_MPROTECT);
-		return;
-	}
-
-	miniblock_t *miniblock = miniblock_node->data;
-	miniblock->perm = permission;
 }

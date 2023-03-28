@@ -6,6 +6,7 @@
 
 #include "io.h"
 #include "mem_io.h"
+#include "mem_prot.h"
 #include "vma.h"
 
 int main(void)

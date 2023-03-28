@@ -9,6 +9,19 @@
 #include "mem_io.h"
 #include "vma.h"
 
+enum perm_bits {
+	PROT_READ = 0b100,
+	PROT_WRITE = 0b010,
+	PROT_EXEC = 0b001,
+	PROT_NONE = 0b000,
+};
+
+#define CHECK_PERM_STRING(string, total_perm, perm_bit)                        \
+	do {                                                                       \
+		if (strcmp(string, #perm_bit) == 0)                                    \
+			(total_perm) |= perm_bit;                                          \
+	} while (0)
+
 int main(void)
 {
 	arena_t *arena = NULL;
@@ -66,6 +79,19 @@ int main(void)
 			write(arena, address, size, buffer);
 		} else if (strcmp(command, "PMAP") == 0) {
 			pmap(arena);
+		} else if (strcmp(command, "MPROTECT") == 0) {
+			u64 address;
+			u8 perm = 0;
+			char *perm_str = read_numbers(args, 1, &address);
+			perm_str = strtok(perm_str, "| ");
+			while (perm_str) {
+				CHECK_PERM_STRING(perm_str, perm, PROT_READ);
+				CHECK_PERM_STRING(perm_str, perm, PROT_WRITE);
+				CHECK_PERM_STRING(perm_str, perm, PROT_EXEC);
+				CHECK_PERM_STRING(perm_str, perm, PROT_NONE);
+				perm_str = strtok(NULL, "| ");
+			}
+			mprotect(arena, address, perm);
 		} else {
 			print_err(INVALID_COMMAND);
 		}

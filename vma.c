@@ -251,11 +251,14 @@ void free_block(arena_t *arena, const u64 address)
 	print_err(INVALID_ADDRESS_FREE);
 }
 
-void mprotect(arena_t *arena, u64 address, int8_t *permission)
+void mprotect(arena_t *arena, u64 address, u8 permission)
 {
-	(void)arena;
-	(void)address;
-	(void)permission;
+	list_t *miniblock_node = access_miniblock(arena, address);
+	if (!miniblock_node) {
+		print_err(INVALID_ADDRESS_MPROTECT);
+		return;
+	}
 
-	// TODO
+	miniblock_t *miniblock = miniblock_node->data;
+	miniblock->perm = permission;
 }

@@ -73,8 +73,11 @@ void print_err(enum err_codes err)
 	case INVALID_ADDRESS_READ:
 		puts("Invalid address for read.");
 		break;
-	case INVALID_ADDRES_WRITE:
+	case INVALID_ADDRESS_WRITE:
 		puts("Invalid address for write.");
+		break;
+	case INVALID_ADDRESS_MPROTECT:
+		puts("Invalid address for mprotect.");
 		break;
 	case INVALID_COMMAND:
 		puts("Invalid command. Please try again.");

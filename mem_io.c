@@ -65,7 +65,7 @@ list_t *access_block(arena_t *arena, const u64 address)
 	return NULL;
 }
 
-list_t *access_adress(arena_t *arena, const u64 address)
+list_t *access_miniblock(arena_t *arena, const u64 address)
 {
 	list_t *block_list = access_block(arena, address);
 	if (!block_list)
@@ -86,7 +86,7 @@ list_t *access_adress(arena_t *arena, const u64 address)
 
 void read(arena_t *arena, u64 address, u64 size)
 {
-	list_t *miniblock_iter = access_adress(arena, address);
+	list_t *miniblock_iter = access_miniblock(arena, address);
 	if (!miniblock_iter) {
 		print_err(INVALID_ADDRESS_READ);
 		return;
@@ -124,9 +124,9 @@ void write(arena_t *arena, const u64 address, const u64 size, u8 *data)
 	(void)size;
 	(void)data;
 
-	list_t *miniblock_iter = access_adress(arena, address);
+	list_t *miniblock_iter = access_miniblock(arena, address);
 	if (!miniblock_iter) {
-		print_err(INVALID_ADDRES_WRITE);
+		print_err(INVALID_ADDRESS_WRITE);
 		return;
 	}
 

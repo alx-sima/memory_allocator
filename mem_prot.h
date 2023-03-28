@@ -36,13 +36,13 @@ enum perm_bits {
  * Calculeaza reprezentarea pe biti
  * a permisiunilor din `perm_str`.
  */
-u8 parse_perm_str(char *perm_str);
+uint8_t parse_perm_str(char *perm_str);
 
 /*
  * Scrie in `perm_str` reprezentarea in
  * format text a permisiunilor din `perm`.
  */
-void get_perm_str(u8 perm, char perm_str[PERM_LEN + 1]);
+void get_perm_str(uint8_t perm, char perm_str[PERM_LEN + 1]);
 
 /*
  * Verifica daca `miniblock` are permisiunea `perm`.
@@ -53,6 +53,6 @@ int check_perm(miniblock_t *miniblock, enum perm_bits perm);
  * Seteaza permisiunea `permission` la
  * `address` (daca este o adresa valida).
  */
-void mprotect(arena_t *arena, u64 address, u8 permission);
+void mprotect(arena_t *arena, uint64_t address, int8_t *permission);
 
 #endif // __MEM_PROT_H

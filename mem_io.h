@@ -6,12 +6,14 @@
 
 #include "vma.h"
 
-list_t *access_block(arena_t *arena, const u64 address);
-list_t *access_miniblock(arena_t *arena, const u64 address);
-list_t *access_miniblock_start(arena_t *arena, const u64 address);
+uint64_t min(uint64_t a, uint64_t b);
+list_t *access_block(arena_t *arena, const uint64_t address);
+list_t *access_miniblock(arena_t *arena, const uint64_t address);
+list_t *access_miniblock_start(arena_t *arena, const uint64_t address);
 
-void read(arena_t *arena, u64 address, u64 size);
-void write(arena_t *arena, const u64 address, const u64 size, u8 *data);
+void read(arena_t *arena, uint64_t address, uint64_t size);
+void write(arena_t *arena, const uint64_t address, const uint64_t size,
+		   uint8_t *data);
 void pmap(const arena_t *arena);
 
 #endif // __MEM_IO_H

@@ -1,9 +1,11 @@
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 #include "io.h"
 #include "list.h"
 #include "mem_io.h"
+#include "mem_prot.h"
 #include "vma.h"
 
 void free_miniblock_data(void *data)
@@ -21,7 +23,7 @@ void free_block_data(void *data)
 	free(data);
 }
 
-arena_t *alloc_arena(const u64 size)
+arena_t *alloc_arena(const uint64_t size)
 {
 	arena_t *arena = malloc(sizeof(arena_t));
 	if (!arena)
@@ -40,7 +42,7 @@ void dealloc_arena(arena_t *arena)
 	free(arena);
 }
 
-static miniblock_t *init_miniblock(const u64 address, const u64 size)
+static miniblock_t *init_miniblock(const uint64_t address, const uint64_t size)
 {
 	miniblock_t *miniblock = malloc(sizeof(miniblock_t));
 	if (!miniblock)
@@ -48,8 +50,8 @@ static miniblock_t *init_miniblock(const u64 address, const u64 size)
 
 	miniblock->size = size;
 	miniblock->start_address = address;
-	miniblock->perm = 0b110;			 // TODO permisiuni placeholder.
-	miniblock->rw_buffer = malloc(size); // TODO clarificare cerinta
+	miniblock->perm = PROT_READ | PROT_WRITE;
+	miniblock->rw_buffer = calloc(1, size);
 	if (!miniblock->rw_buffer) {
 		free(miniblock);
 		return NULL;
@@ -57,7 +59,7 @@ static miniblock_t *init_miniblock(const u64 address, const u64 size)
 	return miniblock;
 }
 
-static block_t *init_block(const u64 address, const u64 size)
+static block_t *init_block(const uint64_t address, const uint64_t size)
 {
 	block_t *block = malloc(sizeof(block_t));
 	if (!block)
@@ -121,7 +123,7 @@ block_t *merge_adjacent_blocks(block_t *prev, block_t *next)
  * Returneaza ultimul nod cu adresa de start
  * mai mica decat `address` (daca exista).
  */
-static list_t *get_prev_block(list_t *list, const u64 address)
+static list_t *get_prev_block(list_t *list, const uint64_t address)
 {
 	block_t *data = list->data;
 	if (address < data->start_address)
@@ -139,7 +141,7 @@ static list_t *get_prev_block(list_t *list, const u64 address)
 	return list;
 }
 
-void alloc_block(arena_t *arena, const u64 address, const u64 size)
+void alloc_block(arena_t *arena, const uint64_t address, const uint64_t size)
 {
 	block_t *new_block = init_block(address, size);
 	if (!new_block)
@@ -190,7 +192,7 @@ void alloc_block(arena_t *arena, const u64 address, const u64 size)
 	}
 }
 
-void free_block(arena_t *arena, const u64 address)
+void free_block(arena_t *arena, const uint64_t address)
 {
 	list_t *block_list = access_block(arena, address);
 	if (!block_list) {
@@ -200,7 +202,7 @@ void free_block(arena_t *arena, const u64 address)
 
 	block_t *block = block_list->data;
 	list_t *iter = block->miniblock_list;
-	u64 prev_miniblocks_size = 0;
+	uint64_t prev_miniblocks_size = 0;
 	while (iter) {
 		miniblock_t *mini = iter->data;
 		if (address != mini->start_address) {

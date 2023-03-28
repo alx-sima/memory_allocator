@@ -34,19 +34,19 @@ size_t read_line(char **str, size_t *size)
 char *read_numbers(char *str, int nr, ...)
 {
 	if (!str)
-		return 0;
+		return NULL;
 
 	va_list args;
 	va_start(args, nr);
 
 	char *next_char = str;
 	for (int i = 0; i < nr; ++i) {
-		u64 *adr = va_arg(args, u64 *);
+		uint64_t *adr = va_arg(args, uint64_t *);
 
 		*adr = strtoll(str, &next_char, 0);
 		if (next_char == str) {
 			va_end(args);
-			return 0;
+			return next_char;
 		}
 		str = next_char;
 	}

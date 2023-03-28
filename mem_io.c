@@ -16,10 +16,10 @@
 static void print_miniblock(void *data, void *args)
 {
 	miniblock_t *block = data;
-	u64 *index = args;
+	uint64_t *index = args;
 	char perm[PERM_LEN + 1];
 	get_perm_str(block->perm, perm);
-	printf("Miniblock %llu:\t\t0x%llX\t\t-\t\t0x%llX\t\t| %s\n", (*index)++,
+	printf("Miniblock %lu:\t\t0x%lX\t\t-\t\t0x%lX\t\t| %s\n", (*index)++,
 		   block->start_address, block->start_address + block->size, perm);
 }
 
@@ -30,19 +30,19 @@ static void print_miniblock(void *data, void *args)
 static void print_block(void *data, void *args)
 {
 	block_t *block = data;
-	u64 *block_nr = args;
+	uint64_t *block_nr = args;
 
-	printf("\nBlock %llu begin\n", *block_nr);
-	printf("Zone: 0x%llX - 0x%llX\n", block->start_address,
+	printf("\nBlock %lu begin\n", *block_nr);
+	printf("Zone: 0x%lX - 0x%lX\n", block->start_address,
 		   block->start_address + block->size);
 
-	u64 miniblock_index = 1;
+	uint64_t miniblock_index = 1;
 	apply_func(block->miniblock_list, print_miniblock, &miniblock_index);
 
-	printf("Block %llu end\n", (*block_nr)++);
+	printf("Block %lu end\n", (*block_nr)++);
 }
 
-list_t *access_block(arena_t *arena, const u64 address)
+list_t *access_block(arena_t *arena, const uint64_t address)
 {
 	list_t *iter = arena->alloc_list;
 	while (iter) {
@@ -59,7 +59,7 @@ list_t *access_block(arena_t *arena, const u64 address)
 	return NULL;
 }
 
-list_t *access_miniblock(arena_t *arena, const u64 address)
+list_t *access_miniblock(arena_t *arena, const uint64_t address)
 {
 	list_t *block_list = access_block(arena, address);
 	if (!block_list)
@@ -81,7 +81,7 @@ list_t *access_miniblock(arena_t *arena, const u64 address)
 	return NULL;
 }
 
-list_t *access_miniblock_start(arena_t *arena, const u64 address)
+list_t *access_miniblock_start(arena_t *arena, const uint64_t address)
 {
 	list_t *miniblock_list = access_miniblock(arena, address);
 	if (!miniblock_list)
@@ -93,98 +93,102 @@ list_t *access_miniblock_start(arena_t *arena, const u64 address)
 	return NULL;
 }
 
-static inline u64 min(u64 a, u64 b)
+uint64_t min(uint64_t a, uint64_t b)
 {
 	return a < b ? a : b;
 }
 
-void read(arena_t *arena, u64 address, u64 size)
+void read(arena_t *arena, uint64_t address, uint64_t size)
 {
-	list_t *miniblock_iter = access_miniblock(arena, address);
-	if (!miniblock_iter) {
+	list_t *iter = access_miniblock(arena, address);
+	if (!iter) {
 		print_err(INVALID_ADDRESS_READ);
 		return;
 	}
 
 	char *buffer = malloc(sizeof(char) * size);
 	// TODO if (!buffer) return;
-	u64 bytes_read = 0;
-	miniblock_t *miniblock = miniblock_iter->data;
-	miniblock_iter = miniblock_iter->next;
-	u64 offset = address - miniblock->start_address;
-	u64 batch = min(size - bytes_read, miniblock->size - offset);
-	memcpy(buffer, miniblock->rw_buffer + offset, batch);
-	bytes_read += batch;
 
-	while (miniblock_iter && size != bytes_read) {
-		miniblock = miniblock_iter->data;
-		miniblock_iter = miniblock_iter->next;
+	miniblock_t *miniblock = iter->data;
+	iter = iter->next;
+	if (!check_perm(miniblock, PROT_READ)) {
+		print_err(INVALID_PERMISSIONS_READ);
+		free(buffer);
+		return;
+	}
+	uint64_t offset = address - miniblock->start_address;
+	uint64_t batch = min(size, miniblock->size - offset);
+	uint64_t bytes_read = batch;
+	memcpy(buffer, miniblock->rw_buffer + offset, batch);
+
+	while (iter && bytes_read != size) {
+		miniblock = iter->data;
+		iter = iter->next;
 
 		if (!check_perm(miniblock, PROT_READ)) {
 			print_err(INVALID_PERMISSIONS_READ);
 			free(buffer);
 			return;
 		}
-		u8 batch = min(size - bytes_read, miniblock->size);
+		batch = min(size - bytes_read, miniblock->size);
 		memcpy(buffer + bytes_read, miniblock->rw_buffer, batch);
 		bytes_read += batch;
 	}
-	if (size != bytes_read)
-		printf("Warning: size was bigger than the block size. Reading %llu "
+	if (bytes_read != size)
+		printf("Warning: size was bigger than the block size. Reading %lu "
 			   "characters.\n",
 			   bytes_read);
-	fwrite(buffer, sizeof(char), bytes_read, stdout);
+	uint64_t out_len = min(bytes_read, strlen(buffer));
+	fwrite(buffer, sizeof(char), out_len, stdout);
 	free(buffer);
 	puts("");
 }
 
-void write(arena_t *arena, const u64 address, const u64 size, u8 *data)
+void write(arena_t *arena, const uint64_t address, const uint64_t size,
+		   uint8_t *data)
 {
-	(void)arena;
-	(void)address;
-	(void)size;
-	(void)data;
-
-	list_t *miniblock_iter = access_miniblock(arena, address);
-	if (!miniblock_iter) {
+	list_t *iter = access_miniblock(arena, address);
+	if (!iter) {
 		print_err(INVALID_ADDRESS_WRITE);
 		return;
 	}
 
-	miniblock_t *miniblock = miniblock_iter->data;
-	u64 bytes_written = 0;
-	void *write_addr =
-		miniblock->rw_buffer + address - miniblock->start_address;
-	for (;;) {
+	miniblock_t *miniblock = iter->data;
+	iter = iter->next;
+	if (!check_perm(miniblock, PROT_WRITE)) {
+		print_err(INVALID_PERMISSIONS_WRITE);
+		return;
+	}
+
+	uint64_t offset = address - miniblock->start_address;
+	uint64_t batch = min(size, miniblock->size - offset);
+	uint64_t bytes_written = batch;
+	memcpy(miniblock->rw_buffer + offset, data, batch);
+
+	while (iter && bytes_written != size) {
 		if (!check_perm(miniblock, PROT_WRITE)) {
-			// TODO
 			print_err(INVALID_PERMISSIONS_WRITE);
 			return;
 		}
-		if (bytes_written + miniblock->size >= size) {
-			memcpy(write_addr, data + bytes_written, size - bytes_written);
-			return;
-		}
-		memcpy(write_addr, data + bytes_written, miniblock->size);
-		bytes_written += miniblock->size;
+		miniblock = iter->data;
+		iter = iter->next;
 
-		miniblock_iter = miniblock_iter->next;
-		if (!miniblock_iter)
-			break;
-		miniblock = miniblock_iter->data;
-		write_addr = miniblock->rw_buffer;
+		batch = min(size - bytes_written, miniblock->size);
+		memcpy(miniblock->rw_buffer, data + bytes_written, batch);
+		bytes_written += batch;
 	}
-	printf("Warning: size was bigger than the block size. Writing %llu "
-		   "characters.\n",
-		   bytes_written);
+	if (bytes_written != size)
+		printf("Warning: size was bigger than the block size. Writing %lu "
+			   "characters.\n",
+			   bytes_written);
 }
 
 void pmap(const arena_t *arena)
 {
 	// TODO refactor
-	u64 no_blocks = 0;
-	u64 no_miniblocks = 0;
-	u64 free_memory = arena->arena_size;
+	uint64_t no_blocks = 0;
+	uint64_t no_miniblocks = 0;
+	uint64_t free_memory = arena->arena_size;
 	list_t *block_iter = arena->alloc_list;
 	while (block_iter) {
 		block_t *block = block_iter->data;
@@ -197,11 +201,11 @@ void pmap(const arena_t *arena)
 		++no_blocks;
 		block_iter = block_iter->next;
 	}
-	printf("Total memory: 0x%llX bytes\n", arena->arena_size);
-	printf("Free memory: 0x%llX bytes\n", free_memory);
-	printf("Number of allocated blocks: %llu\n", no_blocks);
-	printf("Number of allocated miniblocks: %llu\n", no_miniblocks);
+	printf("Total memory: 0x%lX bytes\n", arena->arena_size);
+	printf("Free memory: 0x%lX bytes\n", free_memory);
+	printf("Number of allocated blocks: %lu\n", no_blocks);
+	printf("Number of allocated miniblocks: %lu\n", no_miniblocks);
 
-	u64 block_index = 1;
+	uint64_t block_index = 1;
 	apply_func(arena->alloc_list, print_block, &block_index);
 }

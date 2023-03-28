@@ -1,6 +1,6 @@
-#include <alloca.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "io.h"
@@ -106,7 +106,8 @@ void read(arena_t *arena, u64 address, u64 size)
 		return;
 	}
 
-	char *buffer = alloca(sizeof(char) * size);
+	char *buffer = malloc(sizeof(char) * size);
+	// TODO if (!buffer) return;
 	u64 bytes_read = 0;
 	miniblock_t *miniblock = miniblock_iter->data;
 	miniblock_iter = miniblock_iter->next;
@@ -121,6 +122,7 @@ void read(arena_t *arena, u64 address, u64 size)
 
 		if (!check_perm(miniblock, PROT_READ)) {
 			print_err(INVALID_PERMISSIONS_READ);
+			free(buffer);
 			return;
 		}
 		u8 batch = min(size - bytes_read, miniblock->size);
@@ -132,6 +134,7 @@ void read(arena_t *arena, u64 address, u64 size)
 			   "characters.\n",
 			   bytes_read);
 	fwrite(buffer, sizeof(char), bytes_read, stdout);
+	free(buffer);
 	puts("");
 }
 

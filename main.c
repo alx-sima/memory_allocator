@@ -1,4 +1,3 @@
-#include <alloca.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -57,13 +56,15 @@ int main(void)
 		} else if (strcmp(command, "WRITE") == 0) {
 			u64 address, size;
 			char *data_begin = read_numbers(args, 2, &address, &size) + 1;
-			u8 *buffer = alloca(sizeof(u8) * size);
+			u8 *buffer = malloc(sizeof(u8) * size);
+			// TODO if (!buffer) return 1;
 			u64 bytes_read = strlen(data_begin) + 1;
 			memcpy(buffer, data_begin, bytes_read);
 			// TODO
 			// fread(buffer + bytes_read, sizeof(char), size - bytes_read,
 			// stdin);
 			write(arena, address, size, buffer);
+			free(buffer);
 		} else if (strcmp(command, "PMAP") == 0) {
 			pmap(arena);
 		} else if (strcmp(command, "MPROTECT") == 0) {

@@ -58,6 +58,12 @@ char *read_numbers(char *str, int nr, ...)
 void print_err(enum err_codes err)
 {
 	switch (err) {
+	case ADDRESS_OUT_OF_BOUNDS:
+		puts("The allocated address is outside the size of arena");
+		break;
+	case END_OUT_OF_BOUNDS:
+		puts("The end address is past the size of the arena");
+		break;
 	case INVALID_ALLOC_BLOCK:
 		puts("This zone was already allocated.");
 		break;

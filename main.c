@@ -29,11 +29,19 @@ int main(void)
 			free(line);
 			exit(EXIT_SUCCESS); // TODO
 		} else if (strcmp(command, "ALLOC_BLOCK") == 0) {
-			uint64_t address, block_size;
-			if (*read_numbers(args, 2, &address, &block_size) == '\0')
-				alloc_block(arena, address, block_size);
-			else
+			uint64_t address, size;
+			if (*read_numbers(args, 2, &address, &size) == '\0') {
+				if (address >= arena->arena_size) {
+					print_err(ADDRESS_OUT_OF_BOUNDS);
+				} else {
+					if (address + size <= arena->arena_size)
+						alloc_block(arena, address, size);
+					else
+						print_err(END_OUT_OF_BOUNDS);
+				}
+			} else {
 				print_err(INVALID_COMMAND);
+			}
 		} else if (strcmp(command, "FREE_BLOCK") == 0) {
 			uint64_t address;
 			if (*read_numbers(args, 1, &address) == '\0')

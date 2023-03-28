@@ -5,6 +5,19 @@
 
 #define PERM_LEN 3
 
+enum perm_bits {
+	PROT_READ = 0b100,
+	PROT_WRITE = 0b010,
+	PROT_EXEC = 0b001,
+	PROT_NONE = 0b000,
+};
+
+#define CHECK_PERM_STRING(string, total_perm, perm_bit)                        \
+	do {                                                                       \
+		if (strcmp(string, #perm_bit) == 0)                                    \
+			(total_perm) |= perm_bit;                                          \
+	} while (0)
+
 list_t *access_block(arena_t *arena, const u64 address);
 list_t *access_miniblock(arena_t *arena, const u64 address);
 

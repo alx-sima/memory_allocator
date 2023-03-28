@@ -79,6 +79,12 @@ void print_err(enum err_codes err)
 	case INVALID_ADDRESS_MPROTECT:
 		puts("Invalid address for mprotect.");
 		break;
+	case INVALID_PERMISSIONS_READ:
+		puts("Invalid permissions for read.");
+		break;
+	case INVALID_PERMISSIONS_WRITE:
+		puts("Invalid permissions for write.");
+		break;
 	case INVALID_COMMAND:
 		puts("Invalid command. Please try again.");
 		break;

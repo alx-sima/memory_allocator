@@ -8,11 +8,16 @@
 #include "mem_io.h"
 #include "vma.h"
 
-static void get_perm(u8 perm, char perm_str[PERM_LEN + 1])
+static void get_perm_str(u8 perm, char perm_str[PERM_LEN + 1])
 {
 	for (u8 i = 0; i < PERM_LEN; ++i)
 		if (~perm & (0b1 << i))
 			perm_str[PERM_LEN - i - 1] = '-';
+}
+
+static inline int check_perm(miniblock_t *miniblock, enum perm_bits perm)
+{
+	return miniblock->perm & perm;
 }
 
 /*
@@ -24,7 +29,7 @@ static void print_miniblock(void *data, void *args)
 	miniblock_t *block = data;
 	u64 *index = args;
 	char perm[PERM_LEN + 1] = "RWX";
-	get_perm(block->perm, perm);
+	get_perm_str(block->perm, perm);
 	printf("Miniblock %llu:\t\t0x%llX\t\t-\t\t0x%llX\t\t| %s\n", (*index)++,
 		   block->start_address, block->start_address + block->size, perm);
 }
@@ -97,7 +102,10 @@ void read(arena_t *arena, u64 address, u64 size)
 	while (miniblock_iter) {
 		miniblock_t *miniblock = miniblock_iter->data;
 		miniblock_iter = miniblock_iter->next;
-
+		if (!check_perm(miniblock, PROT_READ)) {
+			print_err(INVALID_PERMISSIONS_READ);
+			return;
+		}
 		if (bytes_read + miniblock->size >= size) {
 			memcpy(buffer + bytes_read, miniblock->rw_buffer,
 				   size - bytes_read);
@@ -135,6 +143,11 @@ void write(arena_t *arena, const u64 address, const u64 size, u8 *data)
 	void *write_addr =
 		miniblock->rw_buffer + address - miniblock->start_address;
 	for (;;) {
+		if (!check_perm(miniblock, PROT_WRITE)) {
+			// TODO
+			print_err(INVALID_PERMISSIONS_WRITE);
+			return;
+		}
 		if (bytes_written + miniblock->size >= size) {
 			memcpy(write_addr, data + bytes_written, size - bytes_written);
 			return;
@@ -178,4 +191,16 @@ void pmap(const arena_t *arena)
 
 	u64 block_index = 1;
 	apply_func(arena->alloc_list, print_block, &block_index);
+}
+
+void mprotect(arena_t *arena, u64 address, u8 permission)
+{
+	list_t *miniblock_node = access_miniblock(arena, address);
+	if (!miniblock_node) {
+		print_err(INVALID_ADDRESS_MPROTECT);
+		return;
+	}
+
+	miniblock_t *miniblock = miniblock_node->data;
+	miniblock->perm = permission;
 }

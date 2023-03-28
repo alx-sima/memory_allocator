@@ -58,7 +58,7 @@ int main(void)
 			char *data_begin = read_numbers(args, 2, &address, &size) + 1;
 			u8 *buffer = malloc(sizeof(u8) * size);
 			// TODO if (!buffer) return 1;
-			u64 bytes_read = strlen(data_begin) + 1;
+			u64 bytes_read = strlen(data_begin);
 			memcpy(buffer, data_begin, bytes_read);
 			// TODO
 			// fread(buffer + bytes_read, sizeof(char), size - bytes_read,

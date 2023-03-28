@@ -192,13 +192,13 @@ void alloc_block(arena_t *arena, const u64 address, const u64 size)
 
 void free_block(arena_t *arena, const u64 address)
 {
-	list_t *block_iter = access_block(arena, address);
-	if (!block_iter) {
+	list_t *block_list = access_block(arena, address);
+	if (!block_list) {
 		print_err(INVALID_ADDRESS_FREE);
 		return;
 	}
 
-	block_t *block = block_iter->data;
+	block_t *block = block_list->data;
 	list_t *iter = block->miniblock_list;
 	u64 prev_miniblocks_size = 0;
 	while (iter) {
@@ -212,12 +212,12 @@ void free_block(arena_t *arena, const u64 address)
 
 		// Blocul este gol: se sterge.
 		if (!block->miniblock_list) {
-			remove_item(&arena->alloc_list, block_iter);
+			remove_item(&arena->alloc_list, block_list);
 			// TODO
 			free_miniblock_data(mini);
 			free(iter);
 			free_block_data(block);
-			free(block_iter);
+			free(block_list);
 			return;
 		}
 		if (iter->prev && iter->next) {
@@ -229,12 +229,13 @@ void free_block(arena_t *arena, const u64 address)
 			new_block->miniblock_list = iter->next;
 			new_block->start_address =
 				((miniblock_t *)iter->next->data)->start_address;
-			new_block->size = block->size - new_block->start_address;
+			new_block->size =
+				block->start_address + block->size - new_block->start_address;
 			block->size = prev_miniblocks_size;
 			iter->next->prev = NULL;
 			iter->prev->next = NULL;
 			// TODO new_block->size
-			insert_after(NULL, block_iter,
+			insert_after(NULL, block_list,
 						 encapsulate(new_block)); // !
 
 		} else {

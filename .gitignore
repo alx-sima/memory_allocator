@@ -1,4 +1,5 @@
 # checker files
+/.check.grade
 /check_utils/
 /cs/
 /tasks/

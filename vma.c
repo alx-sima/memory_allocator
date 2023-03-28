@@ -198,7 +198,7 @@ void free_block(arena_t *arena, const uint64_t address)
 		print_err(INVALID_ADDRESS_FREE);
 		return;
 	}
-	
+
 	block_t *block = block_iter->data;
 	list_t *miniblock_iter = block->miniblock_list;
 	uint64_t prev_miniblocks_size = 0;

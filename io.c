@@ -65,7 +65,7 @@ void print_err(enum err_codes err)
 		puts("Invalid address for free.");
 		break;
 	case INVALID_ADDRESS_READ:
-		puts("Invalid address for read");
+		puts("Invalid address for read.");
 		break;
 	case INVALID_ADDRES_WRITE:
 		puts("Invalid address for write.");

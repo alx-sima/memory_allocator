@@ -7,6 +7,9 @@ TARGET=vma
 
 build: $(TARGET)
 
+run_vma: $(TARGET)
+	./$(TARGET)
+
 $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $^
 

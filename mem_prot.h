@@ -1,5 +1,6 @@
 /*
- * Operatii pentru verificarea si setarea permisiunilor pe blocuri de memorie.
+ * Operatii pentru verificarea si setarea
+ * permisiunilor pe blocuri de memorie.
  */
 #ifndef __MEM_PROT_H
 #define __MEM_PROT_H
@@ -31,6 +32,16 @@ enum perm_bits {
 			(total_perm) |= perm_bit;                                          \
 	} while (0)
 
+/*
+ * Calculeaza reprezentarea pe biti
+ * a permisiunilor din `perm_str`.
+ */
+u8 parse_perm_str(char *perm_str);
+
+/*
+ * Scrie in `perm_str` reprezentarea in
+ * format text a permisiunilor din `perm`.
+ */
 void get_perm_str(u8 perm, char perm_str[PERM_LEN + 1]);
 
 /*
@@ -39,7 +50,8 @@ void get_perm_str(u8 perm, char perm_str[PERM_LEN + 1]);
 int check_perm(miniblock_t *miniblock, enum perm_bits perm);
 
 /*
- * Seteaza permisiunea `permission` la `address` (daca este o adresa valida).
+ * Seteaza permisiunea `permission` la
+ * `address` (daca este o adresa valida).
  */
 void mprotect(arena_t *arena, u64 address, u8 permission);
 

@@ -68,16 +68,8 @@ int main(void)
 			pmap(arena);
 		} else if (strcmp(command, "MPROTECT") == 0) {
 			u64 address;
-			u8 perm = 0;
 			char *perm_str = read_numbers(args, 1, &address);
-			perm_str = strtok(perm_str, "| ");
-			while (perm_str) {
-				CHECK_PERM_STRING(perm_str, perm, PROT_READ);
-				CHECK_PERM_STRING(perm_str, perm, PROT_WRITE);
-				CHECK_PERM_STRING(perm_str, perm, PROT_EXEC);
-				CHECK_PERM_STRING(perm_str, perm, PROT_NONE);
-				perm_str = strtok(NULL, "| ");
-			}
+			u8 perm = parse_perm_str(perm_str);
 			mprotect(arena, address, perm);
 		} else {
 			print_err(INVALID_COMMAND);

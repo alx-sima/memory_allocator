@@ -1,11 +1,11 @@
 #include <stdarg.h>
 #include <stddef.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "io.h"
+#include "vma.h"
 
 size_t read_line(char **str, size_t *size)
 {
@@ -41,7 +41,7 @@ char *read_numbers(char *str, int nr, ...)
 
 	char *next_char = str;
 	for (int i = 0; i < nr; ++i) {
-		uint64_t *adr = va_arg(args, uint64_t *);
+		u64 *adr = va_arg(args, u64 *);
 
 		*adr = strtoll(str, &next_char, 0);
 		if (next_char == str) {

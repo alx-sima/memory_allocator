@@ -19,7 +19,7 @@ int main(void)
 		char *args = strtok(NULL, "\n");
 
 		if (strcmp(command, "ALLOC_ARENA") == 0) {
-			uint64_t size;
+			u64 size;
 			if (*read_numbers(args, 1, &size) == '\0')
 				arena = alloc_arena(size);
 			else
@@ -29,7 +29,7 @@ int main(void)
 			free(line);
 			exit(EXIT_SUCCESS); // TODO
 		} else if (strcmp(command, "ALLOC_BLOCK") == 0) {
-			uint64_t address, size;
+			u64 address, size;
 			if (*read_numbers(args, 2, &address, &size) == '\0') {
 				if (address >= arena->arena_size) {
 					print_err(ADDRESS_OUT_OF_BOUNDS);
@@ -43,27 +43,27 @@ int main(void)
 				print_err(INVALID_COMMAND);
 			}
 		} else if (strcmp(command, "FREE_BLOCK") == 0) {
-			uint64_t address;
+			u64 address;
 			if (*read_numbers(args, 1, &address) == '\0')
 				free_block(arena, address);
 			else
 				print_err(INVALID_COMMAND);
 		} else if (strcmp(command, "READ") == 0) {
-			uint64_t address, size;
+			u64 address, size;
 			if (*read_numbers(args, 2, &address, &size) == '\0')
 				read(arena, address, size);
 			else
 				print_err(INVALID_COMMAND);
 		} else if (strcmp(command, "WRITE") == 0) {
-			uint64_t address, size;
+			u64 address, size;
 			char *data_begin = read_numbers(args, 2, &address, &size) + 1;
-			char *buffer = alloca(sizeof(char) * size);
-			uint64_t bytes_read = strlen(data_begin) + 1;
-			strncpy(buffer, data_begin, bytes_read);
+			u8 *buffer = alloca(sizeof(u8) * size);
+			u64 bytes_read = strlen(data_begin) + 1;
+			memcpy(buffer, data_begin, bytes_read);
 			// TODO
 			// fread(buffer + bytes_read, sizeof(char), size - bytes_read,
 			// stdin);
-			write(arena, address, size, (int8_t *)buffer);
+			write(arena, address, size, buffer);
 		} else if (strcmp(command, "PMAP") == 0) {
 			pmap(arena);
 		} else {

@@ -5,12 +5,11 @@
 
 #define PERM_LEN 3
 
-list_t *access_block(arena_t *arena, const uint64_t address);
+list_t *access_block(arena_t *arena, const u64 address);
 
-void read(arena_t *arena, uint64_t address, uint64_t size);
-void write(arena_t *arena, const uint64_t address, const uint64_t size,
-		   int8_t *data);
+void read(arena_t *arena, u64 address, u64 size);
+void write(arena_t *arena, const u64 address, const u64 size, u8 *data);
 void pmap(const arena_t *arena);
-void mprotect(arena_t *arena, uint64_t address, int8_t *permission);
+void mprotect(arena_t *arena, u64 address, int8_t *permission);
 
 #endif // __MEM_IO_H

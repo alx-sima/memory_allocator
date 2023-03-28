@@ -1,3 +1,6 @@
+/*
+ * Operatii de input-output ale programului.
+ */
 #ifndef __IO_H
 #define __IO_H
 

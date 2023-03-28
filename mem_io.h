@@ -1,3 +1,6 @@
+/*
+ * Operatii de input-output pentru blocuri de memorie.
+ */
 #ifndef __MEM_IO_H
 #define __MEM_IO_H
 
@@ -5,6 +8,7 @@
 
 list_t *access_block(arena_t *arena, const u64 address);
 list_t *access_miniblock(arena_t *arena, const u64 address);
+list_t *access_miniblock_start(arena_t *arena, const u64 address);
 
 void read(arena_t *arena, u64 address, u64 size);
 void write(arena_t *arena, const u64 address, const u64 size, u8 *data);

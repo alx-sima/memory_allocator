@@ -70,12 +70,32 @@ list_t *access_miniblock(arena_t *arena, const u64 address)
 	while (iter) {
 		miniblock_t *miniblock = iter->data;
 
-		if (address == miniblock->start_address)
-			return iter;
+		if (address < miniblock->start_address + miniblock->size) {
+			if (address >= miniblock->start_address)
+				return iter;
+			return NULL;
+		}
 
 		iter = iter->next;
 	}
 	return NULL;
+}
+
+list_t *access_miniblock_start(arena_t *arena, const u64 address)
+{
+	list_t *miniblock_list = access_miniblock(arena, address);
+	if (!miniblock_list)
+		return NULL;
+
+	miniblock_t *miniblock = miniblock_list->data;
+	if (miniblock->start_address == address)
+		return miniblock_list;
+	return NULL;
+}
+
+static inline u64 min(u64 a, u64 b)
+{
+	return a < b ? a : b;
 }
 
 void read(arena_t *arena, u64 address, u64 size)
@@ -88,28 +108,29 @@ void read(arena_t *arena, u64 address, u64 size)
 
 	char *buffer = alloca(sizeof(char) * size);
 	u64 bytes_read = 0;
-	while (miniblock_iter) {
-		miniblock_t *miniblock = miniblock_iter->data;
+	miniblock_t *miniblock = miniblock_iter->data;
+	miniblock_iter = miniblock_iter->next;
+	u64 offset = address - miniblock->start_address;
+	u64 batch = min(size - bytes_read, miniblock->size - offset);
+	memcpy(buffer, miniblock->rw_buffer + offset, batch);
+	bytes_read += batch;
+
+	while (miniblock_iter && size != bytes_read) {
+		miniblock = miniblock_iter->data;
 		miniblock_iter = miniblock_iter->next;
+
 		if (!check_perm(miniblock, PROT_READ)) {
 			print_err(INVALID_PERMISSIONS_READ);
 			return;
 		}
-		if (bytes_read + miniblock->size >= size) {
-			memcpy(buffer + bytes_read, miniblock->rw_buffer,
-				   size - bytes_read);
-			fwrite(buffer, sizeof(char), bytes_read, stdout);
-			puts("");
-			return;
-		}
-
-		memcpy(buffer + bytes_read, miniblock->rw_buffer, miniblock->size);
-		bytes_read += miniblock->size;
+		u8 batch = min(size - bytes_read, miniblock->size);
+		memcpy(buffer + bytes_read, miniblock->rw_buffer, batch);
+		bytes_read += batch;
 	}
-
-	printf("Warning: size was bigger than the block size. Reading %llu "
-		   "characters.\n",
-		   bytes_read);
+	if (size != bytes_read)
+		printf("Warning: size was bigger than the block size. Reading %llu "
+			   "characters.\n",
+			   bytes_read);
 	fwrite(buffer, sizeof(char), bytes_read, stdout);
 	puts("");
 }

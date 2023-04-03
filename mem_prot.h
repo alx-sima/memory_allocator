@@ -53,6 +53,6 @@ int check_perm(miniblock_t *miniblock, enum perm_bits perm);
  * Seteaza permisiunea `permission` la
  * `address` (daca este o adresa valida).
  */
-void mprotect(arena_t *arena, uint64_t address, int8_t *permission);
+void mprotect(arena_t *arena, uint64_t address, char *permission);
 
 #endif // __MEM_PROT_H

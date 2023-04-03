@@ -33,9 +33,9 @@ int check_perm(miniblock_t *miniblock, enum perm_bits perm)
 	return miniblock->perm & perm;
 }
 
-void mprotect(arena_t *arena, uint64_t address, int8_t *permission)
+void mprotect(arena_t *arena, uint64_t address, char *permission)
 {
-	uint8_t perm = parse_perm_str((char *)permission);
+	uint8_t perm = parse_perm_str(permission);
 	list_t *miniblock_node = access_miniblock_start(arena, address);
 	if (!miniblock_node) {
 		print_err(INVALID_ADDRESS_MPROTECT);

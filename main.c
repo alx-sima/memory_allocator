@@ -39,6 +39,11 @@ int main(void)
 			parse_mprotect_command(arena, args);
 		} else {
 			print_err(INVALID_COMMAND);
+			args = strtok(args, "\n ");
+			while (args) {
+				print_err(INVALID_COMMAND);
+				args = strtok(NULL, "\n ");
+			}
 		}
 
 		if (err) {

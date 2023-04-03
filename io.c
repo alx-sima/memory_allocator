@@ -161,14 +161,16 @@ int parse_write_command(arena_t *arena, char *args, char **read_buffer,
 		memcpy(buffer + bytes_read, *read_buffer, batch);
 		bytes_read += batch;
 	}
+
 	write(arena, address, size, buffer);
-	if ((*read_buffer)[batch] != '\n') {
-		char *tmp = strtok(data_begin + batch, "\n ");
-		while (tmp) {
-			print_err(INVALID_COMMAND);
-			tmp = strtok(NULL, "\n ");
-		}
-	}
+	// if ((*read_buffer)[batch] != '\n') {
+	//	char *tmp = strtok(data_begin + batch, "\n ");
+	//	while (tmp) {
+	//  puts("aici");
+	//   print_err(INVALID_COMMAND);
+	//		tmp = strtok(NULL, "\n ");
+	//}
+	//}
 	free(buffer);
 
 	return 0;
@@ -178,5 +180,5 @@ void parse_mprotect_command(arena_t *arena, char *args)
 {
 	uint64_t address;
 	char *perm_str = read_numbers(args, 1, &address);
-	mprotect(arena, address, (int8_t *)perm_str);
+	mprotect(arena, address, perm_str);
 }

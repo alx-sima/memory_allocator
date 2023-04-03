@@ -96,12 +96,12 @@ void print_err(enum err_codes err)
 
 void parse_alloc_arena_command(arena_t **arena, char *args)
 {
-	// TODO
 	uint64_t size;
 	if (*read_numbers(args, 1, &size) == '\n') {
 		*arena = alloc_arena(size);
 		return;
 	}
+
 	print_err(INVALID_COMMAND);
 }
 

@@ -21,6 +21,10 @@ int main(void)
 		char *args = strtok(NULL, "");
 		if (strcmp(command, "ALLOC_ARENA") == 0) {
 			parse_alloc_arena_command(&arena, args);
+			if (!arena) {
+				free(line);
+				exit(EXIT_FAILURE);
+			}
 		} else if (strcmp(command, "DEALLOC_ARENA") == 0) {
 			dealloc_arena(arena);
 			break;

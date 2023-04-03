@@ -148,7 +148,6 @@ void alloc_block(arena_t *arena, const uint64_t address, const uint64_t size)
 	if (!new_block)
 		return;
 
-	// TODO
 	if (!arena->alloc_list) {
 		list_t *new = encapsulate(new_block);
 		if (!new) {
@@ -220,7 +219,7 @@ void free_block(arena_t *arena, const uint64_t address)
 		// Blocul este gol: se sterge.
 		if (!block->miniblock_list) {
 			remove_item(&arena->alloc_list, block_list);
-			// TODO
+			// TODO rewrite
 			free_miniblock_data(mini);
 			free(iter);
 			free_block_data(block);
@@ -233,22 +232,26 @@ void free_block(arena_t *arena, const uint64_t address)
 				arena->has_error = 1;
 				return;
 			}
+
+			miniblock_t *next = iter->next->data;
+			uint64_t block_end_address = block->start_address + block->size;
+
+			block->size = prev_miniblocks_size; // TODO rewrite
+
 			new_block->miniblock_list = iter->next;
-			new_block->start_address =
-				((miniblock_t *)iter->next->data)->start_address;
-			new_block->size =
-				block->start_address + block->size - new_block->start_address;
-			block->size = prev_miniblocks_size;
+			new_block->start_address = next->start_address;
+			new_block->size = block_end_address - new_block->start_address;
+
 			iter->next->prev = NULL;
 			iter->prev->next = NULL;
-			// TODO new_block->size
-			insert_after(NULL, block_list,
-						 encapsulate(new_block)); // !
+			insert_after(&arena->alloc_list, block_list,
+						 encapsulate(new_block));
 
 		} else {
-			if (!iter->prev)
-				block->start_address =
-					((miniblock_t *)iter->next->data)->start_address;
+			if (!iter->prev) {
+				miniblock_t *next = iter->next->data;
+				block->start_address = next->start_address;
+			}
 			block->size -= mini->size;
 		}
 		free_miniblock_data(mini);

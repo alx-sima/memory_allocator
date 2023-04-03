@@ -1,3 +1,4 @@
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -107,7 +108,10 @@ void read(arena_t *arena, uint64_t address, uint64_t size)
 	}
 
 	char *buffer = malloc(sizeof(char) * size);
-	// TODO if (!buffer) return;
+	if (!buffer) {
+		arena->has_error = 1;
+		return;
+	}
 
 	miniblock_t *miniblock = iter->data;
 	iter = iter->next;

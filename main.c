@@ -14,25 +14,24 @@ int main(void)
 	char *line = NULL;
 	size_t line_size = 0;
 	while (read_line(&line, &line_size)) {
-		int err = 0;
 		char *command = strtok(line, "\n ");
 		if (!command)
 			continue;
 
 		char *args = strtok(NULL, "");
 		if (strcmp(command, "ALLOC_ARENA") == 0) {
-			err = parse_alloc_arena_command(&arena, args);
+			parse_alloc_arena_command(&arena, args);
 		} else if (strcmp(command, "DEALLOC_ARENA") == 0) {
 			dealloc_arena(arena);
 			break;
 		} else if (strcmp(command, "ALLOC_BLOCK") == 0) {
-			err = parse_alloc_block_command(arena, args);
+			parse_alloc_block_command(arena, args);
 		} else if (strcmp(command, "FREE_BLOCK") == 0) {
 			parse_free_command(arena, args);
 		} else if (strcmp(command, "READ") == 0) {
-			err = parse_read_command(arena, args);
+			parse_read_command(arena, args);
 		} else if (strcmp(command, "WRITE") == 0) {
-			err = parse_write_command(arena, args, &line, &line_size);
+			parse_write_command(arena, args, &line, &line_size);
 		} else if (strcmp(command, "PMAP") == 0) {
 			pmap(arena);
 		} else if (strcmp(command, "MPROTECT") == 0) {
@@ -46,9 +45,9 @@ int main(void)
 			}
 		}
 
-		if (err) {
-			free(line);
+		if (arena && arena->has_error) {
 			dealloc_arena(arena);
+			free(line);
 			exit(EXIT_FAILURE);
 		}
 	}

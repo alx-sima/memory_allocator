@@ -42,16 +42,16 @@ char *read_numbers(char *str, int nr, ...);
  */
 void print_err(enum err_codes err);
 
-int parse_alloc_arena_command(arena_t **arena, char *args);
+void parse_alloc_arena_command(arena_t **arena, char *args);
 
-int parse_alloc_block_command(arena_t *arena, char *args);
+void parse_alloc_block_command(arena_t *arena, char *args);
 
 void parse_free_command(arena_t *arena, char *args);
 
-int parse_read_command(arena_t *arena, char *args);
+void parse_read_command(arena_t *arena, char *args);
 
-int parse_write_command(arena_t *arena, char *args, char **read_buffer,
-						size_t *buffer_size);
+void parse_write_command(arena_t *arena, char *args, char **read_buffer,
+						 size_t *buffer_size);
 
 void parse_mprotect_command(arena_t *arena, char *args);
 

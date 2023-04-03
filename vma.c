@@ -31,6 +31,7 @@ arena_t *alloc_arena(const uint64_t size)
 
 	arena->arena_size = size;
 	arena->alloc_list = NULL;
+	arena->has_error = 0;
 	return arena;
 }
 
@@ -151,6 +152,7 @@ void alloc_block(arena_t *arena, const uint64_t address, const uint64_t size)
 	if (!arena->alloc_list) {
 		list_t *new = encapsulate(new_block);
 		if (!new) {
+			arena->has_error = 1;
 			free(new_block);
 			return;
 		}
@@ -164,6 +166,7 @@ void alloc_block(arena_t *arena, const uint64_t address, const uint64_t size)
 	block_t *prev_block = prev ? prev->data : NULL;
 	block_t *next_block = next ? next->data : NULL;
 
+	// Blocul se suprapune cu un altul.
 	if (check_overlap(prev_block, new_block) ||
 		check_overlap(new_block, next_block)) {
 		print_err(INVALID_ALLOC_BLOCK);
@@ -186,8 +189,10 @@ void alloc_block(arena_t *arena, const uint64_t address, const uint64_t size)
 	// se aloca un bloc nou dupa acesta.
 	if (prev_block == new_block) {
 		list_t *new = encapsulate(new_block);
-		if (!new)
-			return; // TODO
+		if (!new) {
+			arena->has_error = 1;
+			return;
+		}
 		insert_after(&arena->alloc_list, prev, new);
 	}
 }
@@ -225,7 +230,7 @@ void free_block(arena_t *arena, const uint64_t address)
 		if (iter->prev && iter->next) {
 			block_t *new_block = malloc(sizeof(block_t));
 			if (!new_block) {
-				// TODO
+				arena->has_error = 1;
 				return;
 			}
 			new_block->miniblock_list = iter->next;

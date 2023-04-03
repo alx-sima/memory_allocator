@@ -26,7 +26,7 @@
 - ### Funcționare
 
   - Programul acceptă urmatoarele comenzi, citirea lor facându-se linie cu
-    linie[1][2]:
+    linie[1][3]:
 
     - `ALLOC_ARENA <dimensiune>`: Se alocă o arena (în care se vor aloca mai
       departe blocurile de memorie) cu dimensiunea specificată.
@@ -58,7 +58,23 @@
 
   - La dealocarea unui minibloc, dacă blocul se golește, se elibereaza și
     acesta, sau, dacă miniblocul este la mjlocul blocului, se sparge în 2,
-    blocul din dreapta conținând lista din continuarea miniblocului
+    blocul din dreapta conținând lista din continuarea miniblocului.
+
+  - La citirea din memorie, se verifică dacă adresa este validă (se află într-un
+    minibloc), apoi se verifică dacă miniblocurile din care se citește au
+    permisiunile necesare (`PROT_READ`). Dacă prin citire s-ar ieși din bloc, se
+    afișează un avertisment.
+
+  - La scrierea in memorie, se verifică dacă adresa este alocată (se află
+    într-un minibloc), apoi se verifică dacă toate blocurile în care se scrie au
+    permisiunile necesare (`PROT_WRITE`). Se efectuează scrierea, afișându-se un
+    avertisment dacă datele au fost trunchiate (nu încap în bloc).
+
+  - La schimbarea permisiunilor, se seteaza un octet de permisiuni prin
+    concatenarea biților respectivi (aplicând OR pe biți).
+
+  - Pentru afisarea hărții de memorie, se parcurge lista de blocuri[2],
+    afișându-se informații despre fiecare.
 
 ---
 
@@ -71,11 +87,18 @@
   token din comanda invalidă, în loc de 1/comandă, cum ar fi și normal (testul
   0).
 
+- [2]: Am implementat o funcție generică pentru liste (`apply_func`), care
+  aplică o funcție dată ca parametru tuturor nodurilor listei. Astfel, pentru
+  printarea hărții de memorie, se apeleaza `apply_func` pe lista de blocuri cu o
+  funcție de printat un block, care la randul ei apelează `apply_func` pe lista
+  de miniblocuri din acesta.
+
 ## Resurse
 
-[2]: În temele precedente am constatat ca e dificil să citești o linie în C fără
-să ai o restricție a dimensiunii, așa că foloseam o funcție inspirată dintr-o
-întrebare de pe StackOverflow pe care o găsisem în clasa a XI-a. La tema
-aceasta, îmbunătățit-o, facând mai puține alocări (folosind același buffer care
-se realocă doar când se citește un string mai mare decât el). Sursa de
-inspirație este funcția `getline`, care, din păcate, nu este standard.
+- [3]: În temele precedente am constatat ca e dificil să citești o linie în C
+  fără să ai o restricție a dimensiunii, așa că foloseam o funcție inspirată
+  dintr-o întrebare de pe StackOverflow pe care o găsisem în clasa a XI-a. La
+  tema aceasta, îmbunătățit-o, facând mai puține alocări (folosind același
+  buffer care se realocă doar când se citește un string mai mare decât el).
+  Sursa de inspirație este funcția `getline`, care, din păcate, nu este
+  standard.

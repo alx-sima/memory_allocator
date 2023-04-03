@@ -42,6 +42,9 @@ void remove_item(list_t **list, list_t *item);
  */
 void clear_list(list_t *list, void (*free_func)(void *item));
 
+/*
+ * Aplică funcția `func` cu argumentele `args` pe fiecare element din `list`.
+ */
 void apply_func(list_t *list, void (*func)(void *data, void *args), void *args);
 
 #endif // __LIST_H

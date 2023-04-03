@@ -22,6 +22,7 @@ typedef struct {
 typedef struct {
 	uint64_t arena_size;
 	list_t *alloc_list;
+	int has_error;
 } arena_t;
 
 arena_t *alloc_arena(const uint64_t size);

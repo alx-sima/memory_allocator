@@ -94,16 +94,18 @@ void print_err(enum err_codes err)
 	}
 }
 
-int parse_alloc_arena_command(arena_t **arena, char *args)
+void parse_alloc_arena_command(arena_t **arena, char *args)
 {
+	// TODO
 	uint64_t size;
-	if (*read_numbers(args, 1, &size) == '\n')
-		return !(*arena = alloc_arena(size));
+	if (*read_numbers(args, 1, &size) == '\n') {
+		*arena = alloc_arena(size);
+		return;
+	}
 	print_err(INVALID_COMMAND);
-	return 0;
 }
 
-int parse_alloc_block_command(arena_t *arena, char *args)
+void parse_alloc_block_command(arena_t *arena, char *args)
 {
 	uint64_t address, size;
 	if (*read_numbers(args, 2, &address, &size) == '\n') {
@@ -118,7 +120,6 @@ int parse_alloc_block_command(arena_t *arena, char *args)
 	} else {
 		print_err(INVALID_COMMAND);
 	}
-	return 0;
 }
 
 void parse_free_command(arena_t *arena, char *args)
@@ -130,27 +131,27 @@ void parse_free_command(arena_t *arena, char *args)
 		print_err(INVALID_COMMAND);
 }
 
-int parse_read_command(arena_t *arena, char *args)
+void parse_read_command(arena_t *arena, char *args)
 {
 	uint64_t address, size;
 	if (*read_numbers(args, 2, &address, &size) == '\n')
 		read(arena, address, size);
 	else
 		print_err(INVALID_COMMAND);
-
-	return 0;
 }
 
-int parse_write_command(arena_t *arena, char *args, char **read_buffer,
-						size_t *buffer_size)
+void parse_write_command(arena_t *arena, char *args, char **read_buffer,
+						 size_t *buffer_size)
 {
 	uint64_t address, size;
 	char *data_begin = read_numbers(args, 2, &address, &size);
 	if (*data_begin == ' ')
 		++data_begin;
 	uint8_t *buffer = malloc(sizeof(uint8_t) * size);
-	if (!buffer)
-		return 1;
+	if (!buffer) {
+		arena->has_error = 1;
+		return;
+	}
 
 	uint64_t batch = min(size, strlen(data_begin));
 	memcpy(buffer, data_begin, batch);
@@ -163,17 +164,7 @@ int parse_write_command(arena_t *arena, char *args, char **read_buffer,
 	}
 
 	write(arena, address, size, buffer);
-	// if ((*read_buffer)[batch] != '\n') {
-	//	char *tmp = strtok(data_begin + batch, "\n ");
-	//	while (tmp) {
-	//  puts("aici");
-	//   print_err(INVALID_COMMAND);
-	//		tmp = strtok(NULL, "\n ");
-	//}
-	//}
 	free(buffer);
-
-	return 0;
 }
 
 void parse_mprotect_command(arena_t *arena, char *args)

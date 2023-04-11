@@ -1,11 +1,11 @@
+/*
+ * Copyright: Sima Alexandru (312CA) 2023
+ */
 #include <stddef.h>
-#include <stdint.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "io.h"
-#include "mem_io.h"
 #include "vma.h"
 
 int main(void)
@@ -41,6 +41,7 @@ int main(void)
 		} else if (strcmp(command, "MPROTECT") == 0) {
 			parse_mprotect_command(arena, args);
 		} else {
+			// Se afiseaza eroare pentru fiecare cuvant din comanda invalida.
 			print_err(INVALID_COMMAND);
 			args = strtok(args, "\n ");
 			while (args) {

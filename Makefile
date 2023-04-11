@@ -1,10 +1,12 @@
+# Copyright: Sima Alexandru (312CA) 2023
+
 CC=gcc
 CFLAGS=-Wall -Wextra -std=c99 -g
 
 SRCS=$(wildcard *.c)
 OBJS=$(patsubst %.c, %.o, $(SRCS))
 TARGET=vma
-ARCHIVE=vma.zip
+ARCHIVE=$(TARGET).zip
 
 .PHONY: build run_vma pack clean
 

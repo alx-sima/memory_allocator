@@ -1,11 +1,13 @@
 /*
  * Operatii de input-output ale programului.
+ * Copyright: Sima Alexandru (312CA) 2023
  */
 #ifndef __IO_H
 #define __IO_H
 
-#include "vma.h"
 #include <stddef.h>
+
+#include "vma.h"
 
 /*
  * Coduri de eroare

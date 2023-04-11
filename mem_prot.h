@@ -1,6 +1,7 @@
 /*
- * Operatii pentru verificarea si setarea
- * permisiunilor pe blocuri de memorie.
+ * Operatii pentru verificarea permisiunilor
+ * pe blocuri de memorie.
+ * Copyright: Sima Alexandru (312CA) 2023
  */
 #ifndef __MEM_PROT_H
 #define __MEM_PROT_H
@@ -47,12 +48,6 @@ void get_perm_str(uint8_t perm, char perm_str[PERM_LEN + 1]);
 /*
  * Verifica daca `miniblock` are permisiunea `perm`.
  */
-int check_perm(miniblock_t *miniblock, enum perm_bits perm);
-
-/*
- * Seteaza permisiunea `permission` la
- * `address` (daca este o adresa valida).
- */
-void mprotect(arena_t *arena, uint64_t address, char *permission);
+uint8_t check_perm(miniblock_t *miniblock, enum perm_bits perm);
 
 #endif // __MEM_PROT_H

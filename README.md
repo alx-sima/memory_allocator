@@ -18,15 +18,17 @@
 
   - `io`: Operații de input-output ale programului;
   - `list`: Operații și structuri de date pentru liste generice;
+  - `mem_alloc`: Operații de alocare și stergere a (mini)blocurilor;
   - `mem_io`: Operații de citire-scriere în blocuri de memorie;
   - `mem_prot`: Operații de setare/verificare a permisiunilor blocurilor de
     memorie;
+  - `utils`: Funcții cu caracter general.
   - `vma`: Operații de alocare/dealocare a blocurilor de memorie.
 
 - ### Funcționare
 
   - Programul acceptă urmatoarele comenzi, citirea lor facându-se linie cu
-    linie[1][3]:
+    linie[1][4]:
 
     - `ALLOC_ARENA <dimensiune>`: Se alocă o arena (în care se vor aloca mai
       departe blocurile de memorie) cu dimensiunea specificată.
@@ -60,7 +62,7 @@
     acesta, sau, dacă miniblocul este la mjlocul blocului, se sparge în 2,
     blocul din dreapta conținând lista din continuarea miniblocului.
 
-  - La citirea din memorie, se verifică dacă adresa este validă (se află într-un
+  - La citirea din memorie[2], se verifică dacă adresa este validă (se află într-un
     minibloc), apoi se verifică dacă miniblocurile din care se citește au
     permisiunile necesare (`PROT_READ`). Dacă prin citire s-ar ieși din bloc, se
     afișează un avertisment.
@@ -73,7 +75,7 @@
   - La schimbarea permisiunilor, se seteaza un octet de permisiuni prin
     concatenarea biților respectivi (aplicând OR pe biți).
 
-  - Pentru afisarea hărții de memorie, se parcurge lista de blocuri[2],
+  - Pentru afisarea hărții de memorie, se parcurge lista de blocuri[3],
     afișându-se informații despre fiecare.
 
 ---
@@ -87,7 +89,11 @@
   token din comanda invalidă, în loc de 1/comandă, cum ar fi și normal (testul
   0).
 
-- [2]: Am implementat o funcție generică pentru liste (`apply_func`), care
+- [2]: Pentru citirea și scrierea în memorie, cât și pentru citirea datelor de
+- scris în memorie, am prelucrat informația in "batchuri", copiind bloc cu bloc
+- (respectiv rând cu rând), apoi concatenand rezultatul. 
+
+- [3]: Am implementat o funcție generică pentru liste (`apply_func`), care
   aplică o funcție dată ca parametru tuturor nodurilor listei. Astfel, pentru
   printarea hărții de memorie, se apeleaza `apply_func` pe lista de blocuri cu o
   funcție de printat un block, care la randul ei apelează `apply_func` pe lista
@@ -95,7 +101,7 @@
 
 ## Resurse
 
-- [3]: În temele precedente am constatat ca e dificil să citești o linie în C
+- [4]: În temele precedente am constatat ca e dificil să citești o linie în C
   fără să ai o restricție a dimensiunii, așa că foloseam o funcție inspirată
   dintr-o întrebare de pe StackOverflow pe care o găsisem în clasa a XI-a. La
   tema aceasta, îmbunătățit-o, facând mai puține alocări (folosind același

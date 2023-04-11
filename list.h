@@ -1,5 +1,6 @@
 /*
  * Operatii pe liste dublu inlantuite generice.
+ * Copyright: Sima Alexandru (312CA) 2023
  */
 #ifndef __LIST_H
 #define __LIST_H
@@ -28,6 +29,9 @@ list_t *last_item(list_t *list);
  */
 void insert_after(list_t **list, list_t *node, list_t *item);
 
+/*
+ * Adauga la finalul listei `dest`, elementele din `source`.
+ */
 void merge_lists(list_t *dest, list_t *source);
 
 /*

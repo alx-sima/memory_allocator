@@ -1,3 +1,6 @@
+/*
+ * Copyright: Sima Alexandru (312CA) 2023
+ */
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -6,8 +9,7 @@
 #include <string.h>
 
 #include "io.h"
-#include "mem_io.h"
-#include "mem_prot.h"
+#include "utils.h"
 #include "vma.h"
 
 size_t read_line(char **str, size_t *size)
@@ -18,6 +20,8 @@ size_t read_line(char **str, size_t *size)
 	while (fgets(buffer, BUFSIZ, stdin)) {
 		size_t buffer_siz = strlen(buffer) + 1;
 
+		// `str` se realoca doar cand se citeste un
+		// rand mai mare decat precedentele.
 		if (line_len + buffer_siz > *size) {
 			char *tmp = realloc(*str, sizeof(char) * (line_len + buffer_siz));
 			if (!tmp)
@@ -111,33 +115,35 @@ void parse_alloc_block_command(arena_t *arena, char *args)
 	if (*read_numbers(args, 2, &address, &size) == '\n') {
 		if (address >= arena->arena_size) {
 			print_err(ADDRESS_OUT_OF_BOUNDS);
-		} else {
-			if (address + size <= arena->arena_size)
-				alloc_block(arena, address, size);
-			else
-				print_err(END_OUT_OF_BOUNDS);
+			return;
 		}
-	} else {
-		print_err(INVALID_COMMAND);
+		if (address + size <= arena->arena_size)
+			alloc_block(arena, address, size);
+		else
+			print_err(END_OUT_OF_BOUNDS);
+		return;
 	}
+	print_err(INVALID_COMMAND);
 }
 
 void parse_free_command(arena_t *arena, char *args)
 {
 	uint64_t address;
-	if (*read_numbers(args, 1, &address) == '\n')
+	if (*read_numbers(args, 1, &address) == '\n') {
 		free_block(arena, address);
-	else
-		print_err(INVALID_COMMAND);
+		return;
+	}
+	print_err(INVALID_COMMAND);
 }
 
 void parse_read_command(arena_t *arena, char *args)
 {
 	uint64_t address, size;
-	if (*read_numbers(args, 2, &address, &size) == '\n')
+	if (*read_numbers(args, 2, &address, &size) == '\n') {
 		read(arena, address, size);
-	else
-		print_err(INVALID_COMMAND);
+		return;
+	}
+	print_err(INVALID_COMMAND);
 }
 
 void parse_write_command(arena_t *arena, char *args, char **read_buffer,
@@ -145,9 +151,11 @@ void parse_write_command(arena_t *arena, char *args, char **read_buffer,
 {
 	uint64_t address, size;
 	char *data_begin = read_numbers(args, 2, &address, &size);
+	// Se ignora spatiul de dupa argumente.
 	if (*data_begin == ' ')
 		++data_begin;
-	uint8_t *buffer = malloc(sizeof(uint8_t) * size);
+
+	char *buffer = malloc(sizeof(char) * size);
 	if (!buffer) {
 		arena->has_error = 1;
 		return;

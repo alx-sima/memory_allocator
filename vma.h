@@ -1,3 +1,7 @@
+/*
+ * API-ul alocatorului de memorie.
+ * Copyright: Sima Alexandru (312CA) 2023
+ */
 #ifndef __VMA_H
 #define __VMA_H
 
@@ -30,5 +34,12 @@ void dealloc_arena(arena_t *arena);
 
 void alloc_block(arena_t *arena, const uint64_t address, const uint64_t size);
 void free_block(arena_t *arena, const uint64_t address);
+
+void read(arena_t *arena, uint64_t address, uint64_t size);
+void write(arena_t *arena, const uint64_t address, const uint64_t size,
+		   char *data);
+
+void pmap(const arena_t *arena);
+void mprotect(arena_t *arena, uint64_t address, char *permission);
 
 #endif // __VMA_H

@@ -1,5 +1,6 @@
-#include <stdarg.h>
-#include <stdint.h>
+/*
+ * Copyright: Sima Alexandru (312CA) 2023
+ */
 #include <stdlib.h>
 
 #include "list.h"
